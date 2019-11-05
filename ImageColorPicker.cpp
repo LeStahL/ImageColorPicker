@@ -34,6 +34,7 @@ ImageColorPicker::ImageColorPicker(QWidget *parent)
     m_ui->setupUi(this);
     setAcceptDrops(true);
     setMouseTracking(true);
+    grabMouse();
     m_graphics_scene->addItem(m_item);
     m_graphics_scene->addItem(m_cursor);
     m_ui->graphicsView->setScene(m_graphics_scene);
@@ -77,29 +78,38 @@ void ImageColorPicker::moveSplitter()
     update();
 }
 
+void ImageColorPicker::updateDot(QMouseEvent *e)
+{
+    m_cursor->setPos(m_ui->graphicsView->mapToScene(e->pos())-QPoint(10,10));
+    QColor color = QColor(m_item->pixmap().toImage().pixel((m_ui->graphicsView->mapToScene(e->pos())).toPoint()));
+    m_ui->label_5->setStyleSheet("background-color:"+color.name()+";");
+    m_ui->lineEdit->setText(QString::number((float)color.red()/255.));
+    m_ui->lineEdit_2->setText(QString::number((float)color.green()/255.));
+    m_ui->lineEdit_3->setText(QString::number((float)color.blue()/255.));
+    m_ui->lineEdit_4->setText(QString("vec3(%1,%2,%3)").arg((float)color.red()/255.,4,'f',2,' ').arg((float)color.green()/255.,4,'f',2,' ').arg((float)color.blue()/255.,4,'f',2,' '));
+    m_ui->lineEdit_4->setFocus();
+    m_ui->lineEdit_4->selectAll();
+    m_ui->lineEdit_5->setText(color.name());
+}
+
+
 void ImageColorPicker::mousePressEvent(QMouseEvent* e)
 {
     if(m_ui->graphicsView->rect().contains(e->pos()) && m_item != 0)
     {
-        m_cursor->setPos(m_ui->graphicsView->mapToScene(e->pos())-QPoint(10,10));
-        QColor color = QColor(m_item->pixmap().toImage().pixel((m_ui->graphicsView->mapToScene(e->pos())).toPoint()));
-        m_ui->label_5->setStyleSheet("background-color:"+color.name()+";");
-        m_ui->lineEdit->setText(QString::number((float)color.red()/255.));
-        m_ui->lineEdit_2->setText(QString::number((float)color.green()/255.));
-        m_ui->lineEdit_3->setText(QString::number((float)color.blue()/255.));
-        m_ui->lineEdit_4->setText(QString("vec3(%1,%2,%3)").arg((float)color.red()/255.,4,'f',2,' ').arg((float)color.green()/255.,4,'f',2,' ').arg((float)color.blue()/255.,4,'f',2,' '));
-        m_ui->lineEdit_4->setFocus();
-        m_ui->lineEdit_4->selectAll();
-        m_ui->lineEdit_5->setText(color.name());
+        m_moving = true;
+        updateDot(e);
     }
-    emit(moveSplitter());
+}
+
+void ImageColorPicker::mouseReleaseEvent(QMouseEvent* e)
+{
+    m_moving = false;
 }
 
 void ImageColorPicker::mouseMoveEvent(QMouseEvent* e)
 {
-    qDebug() << "moved.";
-    mousePressEvent(e);
-    emit moveSplitter();
+    if(m_moving) updateDot(e);
 }
 
 void ImageColorPicker::resizeEvent(QResizeEvent* e)

@@ -46,9 +46,11 @@ private:
     void dropEvent(QDropEvent *e);
     void mousePressEvent(QMouseEvent *e);
     void mouseMoveEvent(QMouseEvent *e);
+    void mouseReleaseEvent(QMouseEvent *e);
     void resizeEvent(QResizeEvent *e);
     
     void clicked();
+    void updateDot(QMouseEvent *e);
     
 private:
     QImage m_image;
@@ -56,6 +58,7 @@ private:
     QGraphicsPixmapItem *m_item;
     Ui::ImageColorPicker *m_ui;
     QGraphicsEllipseItem *m_cursor;
+    bool m_moving;
 };
 
 #endif
