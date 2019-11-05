@@ -41,7 +41,7 @@ ImageColorPicker::ImageColorPicker(QWidget *parent)
     m_graphics_scene->addItem(m_item);
     m_graphics_scene->addItem(m_cursor);
     m_ui->graphicsView->setScene(m_graphics_scene);
-    connect(&m_network_access_manager, SIGNAL (finished(QNetworkReply*)), SLOT(downloadFinished(QNetworkReply*)));
+    connect(&m_network_access_manager, SIGNAL(finished(QNetworkReply*)), SLOT(downloadFinished(QNetworkReply*)));
     
     addAction(m_ui->actionPaste);
 }
@@ -141,7 +141,6 @@ void ImageColorPicker::download(QUrl url)
 
 void ImageColorPicker::downloadFinished(QNetworkReply *reply)
 {
-    qDebug() << reply->readAll();
     m_image.loadFromData(reply->readAll());
     emit(imageChanged());
 }
