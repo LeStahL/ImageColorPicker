@@ -1,3 +1,6 @@
+build
+*.kdev4
+
 # Prerequisites
 *.d
 
