@@ -25,6 +25,9 @@
 #include <QDropEvent>
 #include <QMouseEvent>
 #include <QResizeEvent>
+#include <QNetworkAccessManager>
+#include <QNetworkRequest>
+#include <QNetworkReply>
 
 namespace Ui { class ImageColorPicker; }
 
@@ -40,6 +43,8 @@ public:
 private slots:
     void imageChanged();
     void moveSplitter();
+    void downloadFinished(QNetworkReply *reply);
+    void paste();
     
 private:
     void dragEnterEvent(QDragEnterEvent *e);
@@ -51,6 +56,7 @@ private:
     
     void clicked();
     void updateDot(QMouseEvent *e);
+    void download(QUrl url);
     
 private:
     QImage m_image;
@@ -59,6 +65,7 @@ private:
     Ui::ImageColorPicker *m_ui;
     QGraphicsEllipseItem *m_cursor;
     bool m_moving;
+    QNetworkAccessManager m_network_access_manager;
 };
 
 #endif

@@ -22,6 +22,8 @@
 #include <QGraphicsPixmapItem>
 #include <QGraphicsEllipseItem>
 #include <QDebug>
+#include <QClipboard>
+#include <QApplication>
 
 ImageColorPicker::ImageColorPicker(QWidget *parent)
     : QWidget(parent)
@@ -29,6 +31,7 @@ ImageColorPicker::ImageColorPicker(QWidget *parent)
     , m_graphics_scene(new QGraphicsScene())
     , m_item(new QGraphicsPixmapItem)
     , m_cursor(new QGraphicsEllipseItem(0,0,20,20))
+    , m_moving(false)
 {
     m_cursor->setBrush(QBrush(Qt::red, Qt::SolidPattern));
     m_ui->setupUi(this);
@@ -38,6 +41,9 @@ ImageColorPicker::ImageColorPicker(QWidget *parent)
     m_graphics_scene->addItem(m_item);
     m_graphics_scene->addItem(m_cursor);
     m_ui->graphicsView->setScene(m_graphics_scene);
+    connect(&m_network_access_manager, SIGNAL (finished(QNetworkReply*)), SLOT(downloadFinished(QNetworkReply*)));
+    
+    addAction(m_ui->actionPaste);
 }
 
 ImageColorPicker::ImageColorPicker(QImage* image, QWidget* parent)
@@ -56,13 +62,23 @@ ImageColorPicker::~ImageColorPicker()
 void ImageColorPicker::dragEnterEvent(QDragEnterEvent* e)
 {
     if(e->mimeData()->hasImage()) e->acceptProposedAction();
+    if(e->mimeData()->hasUrls()) e->acceptProposedAction();
 }
 
 void ImageColorPicker::dropEvent(QDropEvent* e)
 {
-    m_image = qvariant_cast<QImage>(e->mimeData()->imageData());
-    e->acceptProposedAction();
-    emit(imageChanged());
+    if(e->mimeData()->hasImage())
+    {
+        m_image = qvariant_cast<QImage>(e->mimeData()->imageData());
+        e->acceptProposedAction();
+        emit(imageChanged());
+    }
+    else if(e->mimeData()->hasUrls())
+    {
+        QUrl firstUrl = e->mimeData()->urls().first();
+        download(firstUrl);
+        e->acceptProposedAction();
+    }
 }
 
 void ImageColorPicker::imageChanged()
@@ -115,4 +131,29 @@ void ImageColorPicker::mouseMoveEvent(QMouseEvent* e)
 void ImageColorPicker::resizeEvent(QResizeEvent* e)
 {
     emit(moveSplitter());
+}
+
+void ImageColorPicker::download(QUrl url)
+{
+    QNetworkRequest request(url);
+    m_network_access_manager.get(request);
+}
+
+void ImageColorPicker::downloadFinished(QNetworkReply *reply)
+{
+    qDebug() << reply->readAll();
+    m_image.loadFromData(reply->readAll());
+    emit(imageChanged());
+}
+
+void ImageColorPicker::paste()
+{
+    const QClipboard *clipboard = QApplication::clipboard();
+    const QMimeData *mimeData = clipboard->mimeData();
+
+    if(mimeData->hasImage())
+    {
+        m_image = qvariant_cast<QImage>(mimeData->imageData());
+        emit(imageChanged());
+    }
 }

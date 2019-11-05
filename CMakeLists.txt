@@ -23,7 +23,7 @@ set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 set(CMAKE_AUTOUIC ON)
 
-find_package(Qt5 COMPONENTS Widgets Gui)
+find_package(Qt5 COMPONENTS Widgets Gui Network)
 
 set(IMAGE_COLOR_PICKER_SRC
     main.cpp
@@ -32,7 +32,7 @@ set(IMAGE_COLOR_PICKER_SRC
 )
 
 add_executable(ImageColorPicker ${IMAGE_COLOR_PICKER_SRC})
-target_link_libraries(ImageColorPicker Qt5::Widgets Qt5::Gui)
+target_link_libraries(ImageColorPicker Qt5::Widgets Qt5::Gui Qt5::Network)
 
 if(WIN32)
     get_filename_component(_qt_bin_dir "${QT_QMAKE_EXECUTABLE}" DIRECTORY)
