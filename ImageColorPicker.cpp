@@ -116,6 +116,7 @@ void ImageColorPicker::mousePressEvent(QMouseEvent* e)
         m_moving = true;
         updateDot(e);
     }
+    else setFocus();
 }
 
 void ImageColorPicker::mouseReleaseEvent(QMouseEvent* e)
