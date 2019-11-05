@@ -97,11 +97,9 @@ void ImageColorPicker::mousePressEvent(QMouseEvent* e)
 
 void ImageColorPicker::mouseMoveEvent(QMouseEvent* e)
 {
-    if(m_ui->graphicsView->rect().contains(e->pos()))
-    {
-        m_cursor->setPos(m_ui->graphicsView->mapToScene(e->pos())-QPoint(10,10));
-    }
-    emit(moveSplitter());
+    qDebug() << "moved.";
+    mousePressEvent(e);
+    emit moveSplitter();
 }
 
 void ImageColorPicker::resizeEvent(QResizeEvent* e)
