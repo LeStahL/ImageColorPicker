@@ -1,0 +1,28 @@
+[tool.poetry]
+name = "imagecolorpicker"
+version = "0.1.0"
+description = "Image color picker tool by Team210"
+authors = ["Alexander Kraus <nr4@z10.info>"]
+license = "GPLv3"
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = ">=3.11,<3.13"
+PyQt6 = "^6.4.2"
+beautifulsoup4 = "^4.12.2"
+requests = "^2.31.0"
+
+[tool.poetry.group.dev.dependencies]
+pyinstaller = "^6.0.0"
+distro = "^1.8.0"
+pyqt6-tools = "^6.4.2.3.3"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.qt-designer.widgets]
+site = []
+source = [
+    ".",
+]
