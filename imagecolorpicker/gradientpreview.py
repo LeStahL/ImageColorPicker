@@ -29,10 +29,6 @@ class GradientPreview(QOpenGLWidget):
         self._reload = False
         self.changeColorMaps(DefaultGradient.allColorMaps())
 
-        self._timer = QTimer(self)
-        self._timer.timeout.connect(self.update)
-        self._timer.start(50)
-
         self._resolutionLocation = None
         self._shader = None
         self._program = None
@@ -46,11 +42,13 @@ class GradientPreview(QOpenGLWidget):
     def changeColorMaps(self: Self, colorMaps: List[Tuple[GradientWeight, GradientMix, List[vec3]]]) -> None:
         self._colorMaps = colorMaps
         self._reload = True
+        self.update()
 
     def resizeGL(self: Self, w: int, h: int) -> None:
         if self._shader != None:
             glViewport(0, 0, w, h)
             glUniform2f(self._resolutionLocation, w, h)
+        self.update()
 
     def paintGL(self: Self) -> None:
         if self._reload:

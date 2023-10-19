@@ -16,6 +16,8 @@ from glm import vec3
 class GradientEditor(QWidget):
     UIFile = "gradienteditor.ui"
 
+    doubleClicked = pyqtSignal(QModelIndex)
+
     def __init__(
         self: Self,
         parent: Optional[QWidget] = None,
@@ -31,3 +33,4 @@ class GradientEditor(QWidget):
         self.tableView.setModel(self._gradientModel)
         self._gradientModel.load(self._allColorMaps, self._gradient)
         self.tableView.resizeColumnsToContents()
+        self.tableView.doubleClicked.connect(self.doubleClicked.emit)

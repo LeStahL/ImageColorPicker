@@ -28,6 +28,7 @@ class MainWindow(QMainWindow):
         self.actionCopy.triggered.connect(self.copy)
         self.actionPaste.triggered.connect(self.paste)
         self.actionAbout.triggered.connect(self.about)
+        self.gradientEditor.doubleClicked.connect(self.updateGradientViewWithColor)
 
     def _updatePickInformation(self: Self, cursor: QPointF, color: QColor) -> None:
         floatArgs = color.redF(), color.greenF(), color.blueF()
@@ -96,3 +97,8 @@ class MainWindow(QMainWindow):
         aboutMessage.setWindowTitle("About Image Color Picker")
         aboutMessage.setIcon(QMessageBox.Icon.Information)
         aboutMessage.exec()
+
+    def updateGradientViewWithColor(self: Self, index: QModelIndex) -> None:
+        print("double clicked:", index.row())
+        index.model().setData(index, self.picker._color, Qt.ItemDataRole.EditRole)
+        # self.gradientPreview.

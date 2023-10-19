@@ -7,6 +7,7 @@ from PyQt6.QtWidgets import *
 from PyQt6.QtGui import *
 from typing import *
 from imagecolorpicker.colorgradient import GradientMix, GradientWeight, ColorGradient, DefaultGradient
+from imagecolorpicker.color import Color
 from glm import vec3
 
 class GradientModel(QAbstractTableModel):
@@ -92,3 +93,30 @@ class GradientModel(QAbstractTableModel):
             return GradientModel.ColumnTitles[section]
         else:
             return section
+
+    def flags(
+        self: Self,
+        index: QModelIndex = QModelIndex(),
+    ) -> Qt.ItemFlag:
+        return super().flags(index) | Qt.ItemFlag.ItemIsEditable
+
+    def setData(
+        self: Self,
+        index: QModelIndex,
+        value: Any,
+        role: Qt.ItemDataRole = Qt.ItemDataRole.EditRole,
+    ) -> bool:
+        if not index.isValid() or role != Qt.ItemDataRole.EditRole:
+            return False
+        
+        color: QColor = value
+        newColors: List[vec3] = self._gradient._colors
+        newColors[index.row()] = Color(color.redF(), color.greenF(), color.blueF())
+        self._gradient = ColorGradient(*newColors)
+
+        self._allColorMaps = self._gradient.allColorMaps()
+        self._linearWeights: List[float] = self._gradient.determineWeights(GradientWeight.Unweighted)
+        self._rgbWeights: List[float] = self._gradient.determineWeights(GradientWeight.RGB)
+        self._oklabWeights: List[float] = self._gradient.determineWeights(GradientWeight.Oklab)
+
+        return True
