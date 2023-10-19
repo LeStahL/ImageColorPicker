@@ -15,8 +15,11 @@ ImageColorPicker can
 * Load images from files with formats supported by Qt6 (By selecting `File->Open` or dragging image files onto the preview).
 * Paste images or html with images into the preview with `Edit->Paste` or `CTRL+v`.
 * Drop images or html with images into the preview over drag&drop (for example from web browsers). This will resolve URLS per http request and decode base-64 encoded images.
+* Select colors by clicking into the image.
+* Copy the currently selected color or palette by pressing `CTRL+c`.
 * Select the color format you want to copy when hitting `CTRL+c` over the `Copy`-dropdown.
-* Select colors by clicking into the image. Copy the currently selected color by pressing `CTRL+c`.
+* Double-click entries of the Gradient table to set the resp. gradient color to the currently selected one.
+* Choose a custom color for reference by editing the language/representation table.
 
 # License
 ImageColorPicker is (c) 2023 Alexander Kraus <nr4@z10.info> and GPLv3; see LICENSE for details.
