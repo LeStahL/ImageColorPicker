@@ -410,6 +410,9 @@
        </item>
       </layout>
      </item>
+     <item>
+      <widget class="GradientEditor" name="gradientEditor"/>
+     </item>
     </layout>
    </widget>
   </widget>
@@ -450,8 +453,28 @@
     <string>About</string>
    </property>
   </action>
+  <action name="actionPrepend">
+   <property name="text">
+    <string>Prepend</string>
+   </property>
+  </action>
+  <action name="actionAppend">
+   <property name="text">
+    <string>Append</string>
+   </property>
+  </action>
+  <action name="actionUpdate_selected">
+   <property name="text">
+    <string>Update selected</string>
+   </property>
+  </action>
  </widget>
  <customwidgets>
+  <customwidget>
+   <class>GradientEditor</class>
+   <extends>QWidget</extends>
+   <header>imagecolorpicker.gradienteditor</header>
+  </customwidget>
   <customwidget>
    <class>PickableColorLabel</class>
    <extends>QWidget</extends>

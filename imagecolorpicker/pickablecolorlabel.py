@@ -19,6 +19,7 @@ class PickableColorLabel(QWidget):
 
     picked = pyqtSignal(QPointF, QColor)
     hovered = pyqtSignal(QPointF)
+    rightClicked = pyqtSignal(QPointF, QColor)
 
     def __init__(
         self: Self,
