@@ -69,7 +69,7 @@ class MainWindow(QMainWindow):
         
         # Single color entries
         if self.copyComboBox.currentIndex() <= 8:
-            clipboard.setText(self._codeModel.data(self._codeModel.index(2, self.copyComboBox.currentIndex())))
+            clipboard.setText(self._codeModel.data(self._codeModel.index(self.copyComboBox.currentIndex(), 2)))
 
         # Gradient entries
         if self.copyComboBox.currentIndex() == 9:
