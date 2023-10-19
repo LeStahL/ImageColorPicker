@@ -19,6 +19,9 @@ a = Analysis(
     binaries=[],
     datas=[
         (join(sourcePath, 'mainwindow.ui'), moduleName),
+        (join(sourcePath, 'gradienteditor.ui'), moduleName),
+        (join(sourcePath, 'team210.ico'), moduleName),
+        (join(sourcePath, 'gradientpreview.frag'), moduleName),
         (join(sourcePath, 'default.png'), moduleName),
     ],
     hiddenimports=[
@@ -49,13 +52,13 @@ exe = EXE(
     upx=True,
     upx_exclude=[],
     runtime_tmpdir=None,
-    console=True,
+    console=False,
     disable_windowed_traceback=False,
     argv_emulation=False,
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
-    icon=None,
+    icon=join(sourcePath, 'team210.ico'),
 )
 
 exeFileName = '{}{}'.format(moduleName, '.exe' if system() == 'Windows' else '')

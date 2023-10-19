@@ -45,6 +45,9 @@ class GradientPreview(QOpenGLWidget):
         self.update()
 
     def resizeGL(self: Self, w: int, h: int) -> None:
+        w = int(w * self.window().devicePixelRatio())
+        h = int(h * self.window().devicePixelRatio())
+
         if self._shader != None:
             glViewport(0, 0, w, h)
             glUniform2f(self._resolutionLocation, w, h)
@@ -61,7 +64,8 @@ class GradientPreview(QOpenGLWidget):
                 glDeleteProgram(self._program)
 
             self._shader = glCreateShader(GL_FRAGMENT_SHADER)
-            glShaderSource(self._shader, self._template.render(colorMaps=self._colorMaps))
+            self._source = self._template.render(colorMaps=self._colorMaps)
+            glShaderSource(self._shader, self._source)
             glCompileShader(self._shader)
 
             if glGetShaderiv(self._shader, GL_COMPILE_STATUS) != GL_TRUE:
@@ -76,7 +80,7 @@ class GradientPreview(QOpenGLWidget):
 
             glUseProgram(self._program)
             self._resolutionLocation = glGetUniformLocation(self._program, "iResolution")
-            glUniform2f(self._resolutionLocation, self.width(), self.height())
+            glUniform2f(self._resolutionLocation, self.width() * self.window().devicePixelRatio(), self.height() * self.window().devicePixelRatio())
 
             self._reload = False
 

@@ -24,6 +24,7 @@ from imagecolorpicker.color import (
     Color,
     ColorSpace,
 )
+from slugid import nice
 
 class GradientWeight(IntEnum):
     Unweighted = 0x0
@@ -184,7 +185,7 @@ class ColorGradient:
         mix: GradientMix = GradientMix.Oklab,
     ) -> str:
         result: List[vec3] = self.fit(weight=weight, mix=mix)
-        return """vec3 cmap(float t) {{
+        return """vec3 cmap_{weight}{mix}_{slug}(float t) {{
 {definitions}
           
     return c0+t*(c1+t*(c2+t*(c3+t*(c4+t*(c5+t*c6)))));
@@ -197,6 +198,9 @@ class ColorGradient:
             ),
             range(len(result)),
         )),
+        mix=mix.name,
+        weight=weight.name,
+        slug=nice(),
     )
 
     @staticmethod

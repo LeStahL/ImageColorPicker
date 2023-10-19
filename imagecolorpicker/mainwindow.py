@@ -8,9 +8,11 @@ from os.path import (
     dirname,
 )
 from sys import exit
+from imagecolorpicker.colorgradient import *
 
 class MainWindow(QMainWindow):
     UIFile = "mainwindow.ui"
+    IconFile = "team210.ico"
     
     def __init__(
         self: Self,
@@ -20,6 +22,7 @@ class MainWindow(QMainWindow):
         super().__init__(parent, flags)
 
         loadUi(join(dirname(__file__), MainWindow.UIFile), self)
+        self.setWindowIcon(QIcon(join(dirname(__file__), MainWindow.IconFile)))
 
         self.picker.hovered.connect(lambda cursor: self.statusBar().showMessage('Position: x = {}, y = {}'.format(cursor.x(), cursor.y())))
         self.picker.picked.connect(self._updatePickInformation)
@@ -64,6 +67,7 @@ class MainWindow(QMainWindow):
     def copy(self: Self) -> None:
         clipboard = QGuiApplication.clipboard()
 
+        # Single color entries
         if self.copyComboBox.currentIndex() == 0:
             clipboard.setText(self.vec3LineEdit.text())
         if self.copyComboBox.currentIndex() == 1:
@@ -82,6 +86,20 @@ class MainWindow(QMainWindow):
             clipboard.setText(self.listFloatLineEdit.text())
         if self.copyComboBox.currentIndex() == 8:
             clipboard.setText(self.colorTLineEdit.text())
+        
+        # Gradient entries
+        if self.copyComboBox.currentIndex() == 9:
+            clipboard.setText(self.gradientEditor._gradient.buildColorMap(GradientWeight.Unweighted, GradientMix.Oklab))
+        if self.copyComboBox.currentIndex() == 10:
+            clipboard.setText(self.gradientEditor._gradient.buildColorMap(GradientWeight.Unweighted, GradientMix.RGB))
+        if self.copyComboBox.currentIndex() == 11:
+            clipboard.setText(self.gradientEditor._gradient.buildColorMap(GradientWeight.RGB, GradientMix.Oklab))
+        if self.copyComboBox.currentIndex() == 12:
+            clipboard.setText(self.gradientEditor._gradient.buildColorMap(GradientWeight.RGB, GradientMix.RGB))
+        if self.copyComboBox.currentIndex() == 13:
+            clipboard.setText(self.gradientEditor._gradient.buildColorMap(GradientWeight.Oklab, GradientMix.Oklab))
+        if self.copyComboBox.currentIndex() == 14:
+            clipboard.setText(self.gradientEditor._gradient.buildColorMap(GradientWeight.Oklab, GradientMix.RGB))
 
     def paste(self: Self) -> None:
         clipboard = QGuiApplication.clipboard()
@@ -93,12 +111,14 @@ class MainWindow(QMainWindow):
 
     def about(self: Self) -> None:
         aboutMessage = QMessageBox()
+        aboutMessage.setWindowIcon(QIcon(join(dirname(__file__), MainWindow.IconFile)))
         aboutMessage.setText("Image Color Picker is GPLv3 and (c) 2023 Alexander Kraus <nr4@z10.info>.")
         aboutMessage.setWindowTitle("About Image Color Picker")
         aboutMessage.setIcon(QMessageBox.Icon.Information)
         aboutMessage.exec()
 
     def updateGradientViewWithColor(self: Self, index: QModelIndex) -> None:
-        print("double clicked:", index.row())
         index.model().setData(index, self.picker._color, Qt.ItemDataRole.EditRole)
-        # self.gradientPreview.
+        self.gradientEditor._gradient = index.model()._gradient
+        self.gradientEditor._allColorMaps = index.model()._allColorMaps
+        self.gradientEditor.gradientPreview.changeColorMaps(index.model()._allColorMaps)

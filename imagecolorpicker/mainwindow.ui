@@ -163,6 +163,36 @@
            <string>(C) color_t literal</string>
           </property>
          </item>
+         <item>
+          <property name="text">
+           <string>(GLSL) cmap Lin/Oklab</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>(GLSL) cmap Lin/Rgb</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>(GLSL) cmap Rgb/Oklab</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>(GLSL) cmap Rgb/Rgb</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>(GLSL) cmap Oklab/Oklab</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>(GLSL) cmap Oklab/Rgb</string>
+          </property>
+         </item>
         </widget>
        </item>
       </layout>

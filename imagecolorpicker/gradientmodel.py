@@ -119,4 +119,6 @@ class GradientModel(QAbstractTableModel):
         self._rgbWeights: List[float] = self._gradient.determineWeights(GradientWeight.RGB)
         self._oklabWeights: List[float] = self._gradient.determineWeights(GradientWeight.Oklab)
 
+        self.dataChanged.emit(self.index(index.row(), 0), self.index(index.row(), self.columnCount()), [role])
+
         return True
