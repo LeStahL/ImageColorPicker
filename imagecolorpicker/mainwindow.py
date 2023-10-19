@@ -9,6 +9,7 @@ from os.path import (
 )
 from sys import exit
 from imagecolorpicker.colorgradient import *
+from imagecolorpicker.codemodel import *
 
 class MainWindow(QMainWindow):
     UIFile = "mainwindow.ui"
@@ -33,20 +34,19 @@ class MainWindow(QMainWindow):
         self.actionAbout.triggered.connect(self.about)
         self.gradientEditor.doubleClicked.connect(self.updateGradientViewWithColor)
 
-    def _updatePickInformation(self: Self, cursor: QPointF, color: QColor) -> None:
-        floatArgs = color.redF(), color.greenF(), color.blueF()
-        intArgs = color.red(), color.green(), color.blue()
-        self.vec3LineEdit.setText('vec3({:.2f}, {:.2f}, {:.2f})'.format(*floatArgs))
-        self.vec4LineEdit.setText('vec4({:.2f}, {:.2f}, {:.2f}, 1.)'.format(*floatArgs))
-        self.float3LineEdit.setText('{{{:.2f}f, {:.2f}f, {:.2f}f}}'.format(*floatArgs))
-        self.float4LineEdit.setText('{{{:.2f}f, {:.2f}f, {:.2f}f, 1.0f}}'.format(*floatArgs))
-        self.hexLineEdit.setText(color.name())
-        self.qColorLineEdit.setText('QColor({}, {}, {})'.format(*intArgs))
-        self.listIntLineEdit.setText('[{}, {}, {}]'.format(*intArgs))
-        self.listFloatLineEdit.setText('[{:.2f}, {:.2f}, {:.2f}]'.format(*floatArgs))
-        self.colorTLineEdit.setText('{{{:.2f}, {:.2f}, {:.2f}}}'.format(*floatArgs))
-        self.colorLabel.setStyleSheet('background-color:{}'.format(color.name()))
+        self._codeModel = CodeModel()
+        self._codeModel.dataChanged.connect(self.representationChanged)
+        self.codeView.setModel(self._codeModel)
+        self.codeView.resizeColumnsToContents()
     
+    def representationChanged(self: Self, topLeft: QModelIndex, bottomRight: QModelIndex, roles: List[Qt.ItemDataRole]) -> None:
+        if Qt.ItemDataRole.EditRole in roles:
+            self.colorLabel.setStyleSheet('background-color:{}'.format(topLeft.model()._color.name()))
+
+    def _updatePickInformation(self: Self, cursor: QPointF, color: QColor) -> None:
+        self._codeModel.load(color)
+        self.colorLabel.setStyleSheet('background-color:{}'.format(color.name()))
+
     def open(self: Self) -> None:
         filename, _ = QFileDialog.getOpenFileName(
             None,
@@ -66,27 +66,11 @@ class MainWindow(QMainWindow):
 
     def copy(self: Self) -> None:
         clipboard = QGuiApplication.clipboard()
-
-        # Single color entries
-        if self.copyComboBox.currentIndex() == 0:
-            clipboard.setText(self.vec3LineEdit.text())
-        if self.copyComboBox.currentIndex() == 1:
-            clipboard.setText(self.vec4LineEdit.text())
-        if self.copyComboBox.currentIndex() == 2:
-            clipboard.setText(self.float3LineEdit.text())
-        if self.copyComboBox.currentIndex() == 3:
-            clipboard.setText(self.float4LineEdit.text())
-        if self.copyComboBox.currentIndex() == 4:
-            clipboard.setText(self.hexLineEdit.text())
-        if self.copyComboBox.currentIndex() == 5:
-            clipboard.setText(self.qColorLineEdit.text())
-        if self.copyComboBox.currentIndex() == 6:
-            clipboard.setText(self.listIntLineEdit.text())
-        if self.copyComboBox.currentIndex() == 7:
-            clipboard.setText(self.listFloatLineEdit.text())
-        if self.copyComboBox.currentIndex() == 8:
-            clipboard.setText(self.colorTLineEdit.text())
         
+        # Single color entries
+        if self.copyComboBox.currentIndex() <= 8:
+            clipboard.setText(self._codeModel.data(self._codeModel.index(2, self.copyComboBox.currentIndex())))
+
         # Gradient entries
         if self.copyComboBox.currentIndex() == 9:
             clipboard.setText(self.gradientEditor._gradient.buildColorMap(GradientWeight.Unweighted, GradientMix.Oklab))
