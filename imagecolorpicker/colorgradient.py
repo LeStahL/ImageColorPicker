@@ -36,6 +36,8 @@ class GradientMix(IntEnum):
     Oklab = 0x1
 
 class ColorGradient:
+    Degree = 6
+
     def __init__(
         self: Self,
         *args: Tuple[Color],
@@ -135,7 +137,7 @@ class ColorGradient:
             t,
         ))
 
-        model = PolynomialModel(degree=6)
+        model = PolynomialModel(degree=ColorGradient.Degree)
         
         # Fit red
         r = array(list(map(
@@ -201,8 +203,11 @@ class ColorGradient:
     )
 
     @staticmethod
-    def polynomial(t: float, c0: float, c1: float, c2: float, c3: float, c4: float, c5: float, c6: float) -> float:
-        return c0+t*(c1+t*(c2+t*(c3+t*(c4+t*(c5+t*c6)))))
+    def polynomial(t: float, *c: Tuple[float]) -> float:
+        result = c[-1]
+        for ck in reversed(c[:-1]):
+            result = ck + t * result
+        return result
 
 DefaultGradient = ColorGradient(
     Color(0.15, 0.18, 0.26),

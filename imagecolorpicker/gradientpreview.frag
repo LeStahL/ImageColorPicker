@@ -10,7 +10,14 @@ vec3 cmap_{{ weight.name }}{{ mix.name }}(float t) {
     const vec3 c{{ loop.index - 1 }} = {{ color }};
     {%- endfor %}
 
-    return c0+t*(c1+t*(c2+t*(c3+t*(c4+t*(c5+t*c6)))));
+    return c0
+    {%- for color in cmap[1:] %}
+        +t*(c{{ loop.index }}
+    {%- endfor %}
+    {%- for color in cmap[1:] -%}
+        )
+    {%- endfor -%}
+    ;
 }
 {%- endfor %}
 

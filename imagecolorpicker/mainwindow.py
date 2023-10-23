@@ -38,7 +38,36 @@ class MainWindow(QMainWindow):
         self._codeModel.dataChanged.connect(self.representationChanged)
         self.codeView.setModel(self._codeModel)
         self.codeView.resizeColumnsToContents()
+
+        self.degreeLabel = QLabel(self.toolBar)
+        self.degreeLabel.setText("Degree: ")
+        self.toolBar.addWidget(self.degreeLabel)
+
+        self.polynomialDegreeSpinBox = QSpinBox(self)
+        self.polynomialDegreeSpinBox.setMinimum(1)
+        self.polynomialDegreeSpinBox.setMaximum(7)
+        self.polynomialDegreeSpinBox.setValue(6)
+        self.polynomialDegreeSpinBox.valueChanged.connect(self.degreeChanged)
+        self.toolBar.addWidget(self.polynomialDegreeSpinBox)
+
+        self.colorCountLabel = QLabel(self)
+        self.colorCountLabel.setText("Count: ")
+        self.toolBar.addWidget(self.colorCountLabel)
+
+        self.colorCountSpinBox = QSpinBox(self)
+        self.colorCountSpinBox.setMinimum(3)
+        self.colorCountSpinBox.setMaximum(15)
+        self.colorCountSpinBox.setValue(8)
+        self.colorCountSpinBox.valueChanged.connect(self.colorCountChanged)
+        self.toolBar.addWidget(self.colorCountSpinBox)
     
+    def degreeChanged(self: Self, value: int) -> None:
+        ColorGradient.Degree = value
+        self.gradientEditor._gradientModel.reload()
+        
+    def colorCountChanged(self: Self, value: int) -> None:
+        self.gradientEditor._gradientModel.setColorCount(value)
+
     def representationChanged(self: Self, topLeft: QModelIndex, bottomRight: QModelIndex, roles: List[Qt.ItemDataRole]) -> None:
         if Qt.ItemDataRole.EditRole in roles:
             self.colorLabel.setStyleSheet('background-color:{}'.format(topLeft.model()._color.name()))

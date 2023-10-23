@@ -40,7 +40,21 @@ class GradientModel(QAbstractTableModel):
         parent: QModelIndex = QModelIndex(),
     ) -> int:
         return len(self._gradient._colors)
-    
+
+    def setColorCount(
+        self: Self,
+        count: int,
+    ) -> None:
+        self._gradient._colors = [Color()] * count
+        self._gradient._colors[0] = Color(1.,1.,1.)
+        self._allColorMaps = self._gradient.allColorMaps()
+        self.load(self._allColorMaps, self._gradient)
+
+    def reload(
+        self: Self,
+    ) -> None:
+        self.load(self._allColorMaps, self._gradient)
+
     def load(
         self: Self,
         allColorMaps: List[Tuple[GradientWeight, GradientMix, List[vec3]]],
