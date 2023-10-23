@@ -1,17 +1,12 @@
 from typing import *
-from PyQt6 import QtGui
 from PyQt6.QtCore import *
 from PyQt6.QtWidgets import *
 from PyQt6.QtGui import *
 from PyQt6.QtOpenGLWidgets import *
 from OpenGL.GL import *
 from sys import argv
-from os.path import (
-    join,
-    dirname,
-)
-from imagecolorpicker import DefaultGradient, ColorGradient, GradientWeight, GradientMix
-from copy import deepcopy
+from os.path import dirname
+from imagecolorpicker import DefaultGradient, GradientWeight, GradientMix
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 from sys import argv
 from glm import vec3
@@ -30,8 +25,6 @@ class GradientPreview(QOpenGLWidget):
         self.changeColorMaps(DefaultGradient.allColorMaps())
 
         self._resolutionLocation = None
-        self._shader = None
-        self._program = None
 
         self._environment = Environment(
             loader=FileSystemLoader(dirname(__file__)),
@@ -44,70 +37,48 @@ class GradientPreview(QOpenGLWidget):
         self._reload = True
         self.update()
 
-    def resizeGL(self: Self, w: int, h: int) -> None:
-        w = int(w * self.window().devicePixelRatio())
-        h = int(h * self.window().devicePixelRatio())
-
-        if self._shader != None:
-            try:
-                glViewport(0, 0, w, h)
-                glUniform2f(self._resolutionLocation, w, h)
-            except:
-                return
-
+    def resizeGL(self: Self, width: int, height: int) -> None:
+        super().resizeGL(width, height)
         self.update()
 
     def paintGL(self: Self) -> None:
-        if self._program is not None:
-            try:
-                glUseProgram(self._program)
-                glUniform2f(self._resolutionLocation, self.width() * self.window().devicePixelRatio(), self.height() * self.window().devicePixelRatio())
-            except:
-                glRecti(-1,-1, 1, 1)
-                return
+        super().paintGL()
 
         if self._reload:
-            if self._shader is not None:
-                glDetachShader(self._program, self._shader)
-                glDeleteShader(self._shader)
+            glUseProgram(0)
 
-            if self._program is not None:
-                glUseProgram(0)
-                glDeleteProgram(self._program)
-
-            self._shader = glCreateShader(GL_FRAGMENT_SHADER)
+            shader = glCreateShader(GL_FRAGMENT_SHADER)
             self._source = self._template.render(colorMaps=self._colorMaps)
-            glShaderSource(self._shader, self._source)
-            glCompileShader(self._shader)
+            glShaderSource(shader, self._source)
+            glCompileShader(shader)
 
-            if glGetShaderiv(self._shader, GL_COMPILE_STATUS) != GL_TRUE:
-                print(glGetShaderInfoLog(self._shader))
+            if glGetShaderiv(shader, GL_COMPILE_STATUS) != GL_TRUE:
+                print(glGetShaderInfoLog(shader))
 
-            self._program = glCreateProgram()
-            glAttachShader(self._program, self._shader)
-            glLinkProgram(self._program)
+            program = glCreateProgram()
+            glAttachShader(program, shader)
+            glLinkProgram(program)
 
-            if glGetProgramiv(self._program, GL_LINK_STATUS) != GL_TRUE:
-                print(glGetProgramInfoLog(self._program))
+            if glGetProgramiv(program, GL_LINK_STATUS) != GL_TRUE:
+                print(glGetProgramInfoLog(program))
 
-            self._resolutionLocation = glGetUniformLocation(self._program, "iResolution")
+            glDetachShader(program, shader)
+            glDeleteShader(shader)
+            glUseProgram(program)
+            glDeleteProgram(program)
 
             self._reload = False
 
-        glRecti(-1,-1, 1, 1)
-
-    def __del__(self) -> None:
-        if self._shader is not None:
-            glDetachShader(self._program, self._shader)
-            glDeleteShader(self._shader)
-            self._shader = None
-
-        if self._program is not None:
-            glUseProgram(0)
-            glDeleteProgram(self._program)
-            self._program = None
-        
-        self._resolutionLocation = None
+        try:
+            glUniform2f(
+                glGetUniformLocation(program, "iResolution"),
+                self.width() * self.window().devicePixelRatio(),
+                self.height() * self.window().devicePixelRatio(),
+            )
+            glRecti(-1,-1, 1, 1)
+        except:
+            self._reload = True
+            self.update()
 
 if __name__ == '__main__':
     app = QApplication(argv)

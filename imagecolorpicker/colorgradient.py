@@ -186,21 +186,18 @@ class ColorGradient:
     ) -> str:
         result: List[vec3] = self.fit(weight=weight, mix=mix)
         return """vec3 cmap_{weight}{mix}_{slug}(float t) {{
-{definitions}
-          
-    return c0+t*(c1+t*(c2+t*(c3+t*(c4+t*(c5+t*c6)))));
+    return {open}
+    {close};
 }}
 """.format(
-        definitions='\n'.join(map(
-            lambda resultIndex: '    vec3 c{index} = {parameter};'.format(
-                index=resultIndex,
-                parameter=result[resultIndex],
-            ),
+        open='\n        +t*('.join(map(
+            lambda resultIndex: 'vec3({:.2f},{:.2f},{:.2f})'.format(*result[resultIndex]),
             range(len(result)),
         )),
+        close=')' * (len(result) - 1),
         mix=mix.name,
         weight=weight.name,
-        slug=nice(),
+        slug=nice().replace('-', '_'),
     )
 
     @staticmethod
