@@ -6,16 +6,16 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>400</width>
+    <width>386</width>
     <height>300</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>Form</string>
   </property>
-  <layout class="QVBoxLayout" name="verticalLayout">
+  <layout class="QVBoxLayout" name="verticalLayout_2">
    <property name="spacing">
-    <number>2</number>
+    <number>6</number>
    </property>
    <property name="leftMargin">
     <number>0</number>
@@ -30,14 +30,76 @@
     <number>0</number>
    </property>
    <item>
-    <widget class="GradientPreview" name="gradientPreview">
-     <property name="minimumSize">
-      <size>
-       <width>64</width>
-       <height>64</height>
-      </size>
+    <layout class="QHBoxLayout" name="horizontalLayout">
+     <property name="spacing">
+      <number>12</number>
      </property>
-    </widget>
+     <item>
+      <layout class="QVBoxLayout" name="verticalLayout">
+       <property name="spacing">
+        <number>6</number>
+       </property>
+       <item>
+        <widget class="QLabel" name="label">
+         <property name="text">
+          <string>Lin/RGB</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QLabel" name="label_2">
+         <property name="text">
+          <string>Lin/Oklab</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QLabel" name="label_3">
+         <property name="text">
+          <string>RGB/RGB</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QLabel" name="label_4">
+         <property name="text">
+          <string>RGB/Oklab</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QLabel" name="label_5">
+         <property name="text">
+          <string>Oklab/RGB</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QLabel" name="label_6">
+         <property name="text">
+          <string>Oklab/Oklab</string>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </item>
+     <item>
+      <widget class="GradientPreview" name="gradientPreview">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="MinimumExpanding" vsizetype="Preferred">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="minimumSize">
+        <size>
+         <width>64</width>
+         <height>64</height>
+        </size>
+       </property>
+      </widget>
+     </item>
+    </layout>
    </item>
    <item>
     <widget class="QTableView" name="tableView">

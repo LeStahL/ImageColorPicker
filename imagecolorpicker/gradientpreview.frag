@@ -22,4 +22,7 @@ void main() {
     if(uv.y > {{ (loop.index - 1) / (loop.length) }})
         oColor = vec4(cmap_{{ weight.name }}{{ mix.name }}(uv.x), 1.);
     {%- endfor %}
+
+    float dy = 1. / float({{ colorMaps.__len__() }});
+    oColor.rgb = mix(oColor.rgb, vec3(0.94, 0.94, 0.94), smoothstep(.5/iResolution.y, -.5/iResolution.y, abs(mod(uv.y + .5 * dy, dy) - .5 * dy) - .0065));
 }

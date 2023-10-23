@@ -49,11 +49,23 @@ class GradientPreview(QOpenGLWidget):
         h = int(h * self.window().devicePixelRatio())
 
         if self._shader != None:
-            glViewport(0, 0, w, h)
-            glUniform2f(self._resolutionLocation, w, h)
+            try:
+                glViewport(0, 0, w, h)
+                glUniform2f(self._resolutionLocation, w, h)
+            except:
+                return
+
         self.update()
 
     def paintGL(self: Self) -> None:
+        if self._program is not None:
+            try:
+                glUseProgram(self._program)
+                glUniform2f(self._resolutionLocation, self.width() * self.window().devicePixelRatio(), self.height() * self.window().devicePixelRatio())
+            except:
+                glRecti(-1,-1, 1, 1)
+                return
+
         if self._reload:
             if self._shader is not None:
                 glDetachShader(self._program, self._shader)
@@ -78,13 +90,24 @@ class GradientPreview(QOpenGLWidget):
             if glGetProgramiv(self._program, GL_LINK_STATUS) != GL_TRUE:
                 print(glGetProgramInfoLog(self._program))
 
-            glUseProgram(self._program)
             self._resolutionLocation = glGetUniformLocation(self._program, "iResolution")
-            glUniform2f(self._resolutionLocation, self.width() * self.window().devicePixelRatio(), self.height() * self.window().devicePixelRatio())
 
             self._reload = False
 
         glRecti(-1,-1, 1, 1)
+
+    def __del__(self) -> None:
+        if self._shader is not None:
+            glDetachShader(self._program, self._shader)
+            glDeleteShader(self._shader)
+            self._shader = None
+
+        if self._program is not None:
+            glUseProgram(0)
+            glDeleteProgram(self._program)
+            self._program = None
+        
+        self._resolutionLocation = None
 
 if __name__ == '__main__':
     app = QApplication(argv)
