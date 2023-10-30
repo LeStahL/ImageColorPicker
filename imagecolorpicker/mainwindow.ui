@@ -206,6 +206,36 @@
            <string>(GLSL) cmap Oklab/Rgb</string>
           </property>
          </item>
+         <item>
+          <property name="text">
+           <string>(GLSL) near Lin/Oklab</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>(GLSL) near Lin/RGB</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>(GLSL) near RGB/Oklab</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>(GLSL) near RGB/RGB</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>(GLSL) near Oklab/Oklab</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>(GLSL) near Oklab/RGB</string>
+          </property>
+         </item>
         </widget>
        </item>
       </layout>

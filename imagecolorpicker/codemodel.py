@@ -25,6 +25,12 @@ class Representation(StrEnum):
     QColor = 'QColor({red}, {green}, {blue})'
     color_t = '{{{redf:.2f}, {greenf:.2f}, {bluef:.2f}}}'
     Hex = '{name}'
+    NearLinRgb = 'cmap_UnweightedRGB{slug}({nearLinRGB:.2f})'
+    NearLinOklab = 'cmap_UnweightedOklab{slug}({nearLinOklab:.2f})'
+    NearRgbRgb = 'cmap_RGBRGB{slug}({nearRGBRGB:.2f})'
+    NearRgbOklab = 'cmap_RGBOklab{slug}({nearRGBOklab:.2f})'
+    NearOklabRgb = 'cmap_OklabRGB{slug}({nearOklabRGB:.2f})'
+    NearOklabOklab = 'cmap_OklabOklab{slug}({nearOklabOklab:.2f})'
 
 class CodeModel(QAbstractTableModel):
     ColumnTitles = [
@@ -42,6 +48,12 @@ class CodeModel(QAbstractTableModel):
         (Language.Python, Representation.QColor, 'QColor'),
         (Language.C, Representation.color_t, 'color_t'),
         (Language.CSS, Representation.Hex, 'hex'),
+        (Language.GLSL, Representation.NearLinOklab, 'Near Lin/Oklab'),
+        (Language.GLSL, Representation.NearLinRgb, 'Near Lin/RGB'),
+        (Language.GLSL, Representation.NearRgbOklab, 'Near RGB/Oklab'),
+        (Language.GLSL, Representation.NearRgbRgb, 'Near RGB/RGB'),
+        (Language.GLSL, Representation.NearOklabOklab, 'Near Oklab/Oklab'),
+        (Language.GLSL, Representation.NearOklabRgb, 'Near Oklab/RGB'),
     ]
 
     def __init__(
@@ -51,6 +63,8 @@ class CodeModel(QAbstractTableModel):
         super().__init__(parent)
 
         self._color = QColor.fromRgb(0,0,0)
+        self._slug = "_example"
+        self._nearestWeights = [0.] * 6
 
     def columnCount(
         self: Self,
@@ -67,9 +81,13 @@ class CodeModel(QAbstractTableModel):
     def load(
         self: Self,
         color: QColor,
+        nearestWeights: List[float],
+        slug: str,
     ):
         self.beginResetModel()
         self._color = color
+        self._nearestWeights = nearestWeights
+        self._slug = slug
         self.endResetModel()
 
     def data(
@@ -96,6 +114,13 @@ class CodeModel(QAbstractTableModel):
                     green=self._color.green(),
                     blue=self._color.blue(),
                     name=self._color.name(),
+                    slug=self._slug,
+                    nearLinRGB=self._nearestWeights[0],
+                    nearLinOklab=self._nearestWeights[1],
+                    nearRGBRGB=self._nearestWeights[2],
+                    nearRGBOklab=self._nearestWeights[3],
+                    nearOklabRGB=self._nearestWeights[4],
+                    nearOklabOklab=self._nearestWeights[5],
                 )
             
         elif role == Qt.ItemDataRole.BackgroundRole:
@@ -148,6 +173,8 @@ class CodeModel(QAbstractTableModel):
             self._color = QColor.fromRgb(result['red'], result['green'], result['blue'])
         elif 'name' in result:
             self._color = QColor(result['name'])
+        else:
+            return False
         
         self.dataChanged.emit(self.index(index.row(), 0), self.index(index.row(), self.columnCount()), [role])
 

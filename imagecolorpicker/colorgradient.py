@@ -1,5 +1,5 @@
 from __future__ import annotations
-from scipy.optimize import curve_fit
+from scipy.optimize import curve_fit, minimize
 from numpy import (
     array,
     array,
@@ -8,11 +8,13 @@ from numpy import (
 from glm import (
     vec3,
     fract,
+    length,
 )
 from typing import (
     Self,
     Tuple,
     List,
+    Optional,
 )
 from enum import (
     IntEnum,
@@ -24,7 +26,7 @@ from imagecolorpicker.color import (
     Color,
     ColorSpace,
 )
-from slugid import nice
+from functools import partial
 
 class GradientWeight(IntEnum):
     Unweighted = 0x0
@@ -83,9 +85,10 @@ class ColorGradient:
         amount: float,
         weight: GradientWeight = GradientWeight.Oklab,
         mix: GradientMix = GradientMix.Oklab,
+        weights: Optional[List[float]] = None,
     ) -> Color:
         amount = fract(amount)
-        weights = self.determineWeights(weight)
+        weights = self.determineWeights(weight) if weights is None else weights
 
         for colorIndex in range(len(self._colors)):
             if amount < weights[(colorIndex + 1) % len(self._colors)]:
@@ -124,7 +127,27 @@ class ColorGradient:
         result.toColorSpace(ColorSpace.RGB)
 
         return result
-            
+    
+    def nearestWeightInColorMap(
+        self: Self,
+        colorMap: List[vec3],
+        c0: vec3,
+    ) -> float:
+        costFunction: partial = partial(ColorGradient.colorMapDistance, colorMap=colorMap, c0=c0)
+        return minimize(costFunction, .5, method='Nelder-Mead').x[0]
+
+    @staticmethod
+    def colorMapDistance(t: float, colorMap: List[vec3], c0: vec3) -> float:
+        red = [color.r for color in colorMap]
+        green = [color.g for color in colorMap]
+        blue = [color.b for color in colorMap]
+        
+        return length(vec3(
+            ColorGradient.polynomial(t, *red),
+            ColorGradient.polynomial(t, *green),
+            ColorGradient.polynomial(t, *blue),
+        ) - c0)
+
     def fit(
         self: Self,
         amount: int = 256,
@@ -185,9 +208,10 @@ class ColorGradient:
         self: Self,
         weight: GradientWeight = GradientWeight.Oklab,
         mix: GradientMix = GradientMix.Oklab,
+        slug: str = '_example',
     ) -> str:
         result: List[vec3] = self.fit(weight=weight, mix=mix)
-        return """vec3 cmap_{weight}{mix}_{slug}(float t) {{
+        return """vec3 cmap_{weight}{mix}{slug}(float t) {{
     return {open}
     {close};
 }}
@@ -199,7 +223,7 @@ class ColorGradient:
         close=')' * (len(result) - 1),
         mix=mix.name,
         weight=weight.name,
-        slug=nice().replace('-', '_'),
+        slug=slug,
     )
 
     @staticmethod

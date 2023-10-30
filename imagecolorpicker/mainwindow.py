@@ -61,6 +61,15 @@ class MainWindow(QMainWindow):
         self.colorCountSpinBox.valueChanged.connect(self.colorCountChanged)
         self.toolBar.addWidget(self.colorCountSpinBox)
     
+        self.slugLabel = QLabel(self)
+        self.slugLabel.setText("Slug: ")
+        self.toolBar.addWidget(self.slugLabel)
+
+        self.slugLineEdit = QLineEdit(self)
+        self.slugLineEdit.setMaximumWidth(100)
+        self.slugLineEdit.setText("_example")
+        self.toolBar.addWidget(self.slugLineEdit)
+
     def degreeChanged(self: Self, value: int) -> None:
         ColorGradient.Degree = value
         self.gradientEditor._gradientModel.reload()
@@ -73,8 +82,22 @@ class MainWindow(QMainWindow):
             self.colorLabel.setStyleSheet('background-color:{}'.format(topLeft.model()._color.name()))
 
     def _updatePickInformation(self: Self, cursor: QPointF, color: QColor) -> None:
-        self._codeModel.load(color)
         self.colorLabel.setStyleSheet('background-color:{}'.format(color.name()))
+
+        nearestWeights: List[float] = []
+        for _, _, colorMap in self.gradientEditor._allColorMaps:
+            nearestWeights.append(
+                self.gradientEditor._gradient.nearestWeightInColorMap(
+                    colorMap,
+                    vec3(
+                        color.redF(),
+                        color.greenF(),
+                        color.blueF(),
+                    ),
+                ),
+            )
+
+        self._codeModel.load(color, nearestWeights, self.slugLineEdit.text())
 
     def open(self: Self) -> None:
         filename, _ = QFileDialog.getOpenFileName(
@@ -113,6 +136,10 @@ class MainWindow(QMainWindow):
             clipboard.setText(self.gradientEditor._gradient.buildColorMap(GradientWeight.Oklab, GradientMix.Oklab))
         if self.copyComboBox.currentIndex() == 14:
             clipboard.setText(self.gradientEditor._gradient.buildColorMap(GradientWeight.Oklab, GradientMix.RGB))
+
+        # Nearest cmap parameter entries
+        if self.copyComboBox.currentIndex() >= 15 and self.copyComboBox.currentIndex() < 21:
+            clipboard.setText(self._codeModel.data(self._codeModel.index(self.copyComboBox.currentIndex() - 6, 2)))
 
     def paste(self: Self) -> None:
         clipboard = QGuiApplication.clipboard()

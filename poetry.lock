@@ -776,17 +776,6 @@ testing = ["build[virtualenv]", "filelock (>=3.4.0)", "flake8-2020", "ini2toml[l
 testing-integration = ["build[virtualenv] (>=1.0.3)", "filelock (>=3.4.0)", "jaraco.envs (>=2.2)", "jaraco.path (>=3.2.0)", "packaging (>=23.1)", "pytest", "pytest-enabler", "pytest-xdist", "tomli", "virtualenv (>=13.0.0)", "wheel"]
 
 [[package]]
-name = "slugid"
-version = "2.0.0"
-description = "Base64 encoded uuid v4 slugs"
-optional = false
-python-versions = "*"
-files = [
-    {file = "slugid-2.0.0-py2.py3-none-any.whl", hash = "sha256:aec8b0e01c4ad32e38e12d609eab3ec912fd129aaf6b2ded0199b56a5f8fd67c"},
-    {file = "slugid-2.0.0.tar.gz", hash = "sha256:a950d98b72691178bdd4d6c52743c4a2aa039207cf7a97d71060a111ff9ba297"},
-]
-
-[[package]]
 name = "soupsieve"
 version = "2.5"
 description = "A modern CSS selector implementation for Beautiful Soup."
@@ -837,4 +826,4 @@ zstd = ["zstandard (>=0.18.0)"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.11,<3.13"
-content-hash = "4ecd5d509c1033e86cdff3f39a7305125f7f74250e1ffab4941f740e435ab23b"
+content-hash = "de39bb531eda6387cad7c85b27a5bf79299c3ab73d22916d84ccd4622bbadcf8"
