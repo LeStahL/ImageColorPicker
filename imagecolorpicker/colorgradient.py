@@ -32,10 +32,12 @@ class GradientWeight(IntEnum):
     Unweighted = 0x0
     RGB = 0x1
     Oklab = 0x2
+    Cielab = 0x3
 
 class GradientMix(IntEnum):
     RGB = 0x0
     Oklab = 0x1
+    Cielab = 0x2
 
 class ColorGradient:
     Degree = 6
@@ -67,6 +69,9 @@ class ColorGradient:
                 elif weight == GradientWeight.Oklab:
                     c1.toColorSpace(ColorSpace.OKLAB)
                     c2.toColorSpace(ColorSpace.OKLAB)
+                elif weight == GradientWeight.Cielab:
+                    c1.toColorSpace(ColorSpace.CIELAB)
+                    c2.toColorSpace(ColorSpace.CIELAB)
 
                 colorspaceDistance = Color.distance(c1, c2)
                 colorspaceDistances[colorIndex] = colorspaceDistance
@@ -101,6 +106,9 @@ class ColorGradient:
                 elif mix == GradientMix.Oklab:
                     c1.toColorSpace(ColorSpace.OKLAB)
                     c2.toColorSpace(ColorSpace.OKLAB)
+                elif mix == GradientMix.Cielab:
+                    c1.toColorSpace(ColorSpace.CIELAB)
+                    c2.toColorSpace(ColorSpace.CIELAB)
 
                 lowerWeight: float = weights[colorIndex]
                 upperWeight: float = weights[(colorIndex + 1) % len(self._colors)]
@@ -119,6 +127,9 @@ class ColorGradient:
         elif mix == GradientMix.Oklab:
             c1.toColorSpace(ColorSpace.OKLAB)
             c2.toColorSpace(ColorSpace.OKLAB)
+        elif mix == GradientMix.Cielab:
+            c1.toColorSpace(ColorSpace.CIELAB)
+            c2.toColorSpace(ColorSpace.CIELAB)
 
         lowerWeight: float = weights[-1]
         localAmount: float = (amount - lowerWeight) / abs(1. - lowerWeight)
