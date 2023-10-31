@@ -188,6 +188,11 @@
          </item>
          <item>
           <property name="text">
+           <string>(GLSL) cmap Lin/Cielab</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
            <string>(GLSL) cmap Rgb/Oklab</string>
           </property>
          </item>
@@ -198,12 +203,37 @@
          </item>
          <item>
           <property name="text">
+           <string>(GLSL) cmap Rgb/Cielab</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
            <string>(GLSL) cmap Oklab/Oklab</string>
           </property>
          </item>
          <item>
           <property name="text">
            <string>(GLSL) cmap Oklab/Rgb</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>(GLSL) cmap Oklab/Cielab</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>(GLSL) cmap Cielab/Oklab</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>(GLSL) cmap Cielab/Rgb</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>(GLSL) cmap Cielab/Cielab</string>
           </property>
          </item>
          <item>

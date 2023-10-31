@@ -129,17 +129,29 @@ class MainWindow(QMainWindow):
         if self.copyComboBox.currentIndex() == 10:
             clipboard.setText(self.gradientEditor._gradient.buildColorMap(GradientWeight.Unweighted, GradientMix.RGB))
         if self.copyComboBox.currentIndex() == 11:
-            clipboard.setText(self.gradientEditor._gradient.buildColorMap(GradientWeight.RGB, GradientMix.Oklab))
+            clipboard.setText(self.gradientEditor._gradient.buildColorMap(GradientWeight.Unweighted, GradientMix.Cielab))
         if self.copyComboBox.currentIndex() == 12:
-            clipboard.setText(self.gradientEditor._gradient.buildColorMap(GradientWeight.RGB, GradientMix.RGB))
+            clipboard.setText(self.gradientEditor._gradient.buildColorMap(GradientWeight.RGB, GradientMix.Oklab))
         if self.copyComboBox.currentIndex() == 13:
-            clipboard.setText(self.gradientEditor._gradient.buildColorMap(GradientWeight.Oklab, GradientMix.Oklab))
+            clipboard.setText(self.gradientEditor._gradient.buildColorMap(GradientWeight.RGB, GradientMix.RGB))
         if self.copyComboBox.currentIndex() == 14:
+            clipboard.setText(self.gradientEditor._gradient.buildColorMap(GradientWeight.RGB, GradientMix.Cielab))
+        if self.copyComboBox.currentIndex() == 15:
+            clipboard.setText(self.gradientEditor._gradient.buildColorMap(GradientWeight.Oklab, GradientMix.Oklab))
+        if self.copyComboBox.currentIndex() == 16:
             clipboard.setText(self.gradientEditor._gradient.buildColorMap(GradientWeight.Oklab, GradientMix.RGB))
-
+        if self.copyComboBox.currentIndex() == 17:
+            clipboard.setText(self.gradientEditor._gradient.buildColorMap(GradientWeight.Oklab, GradientMix.Cielab))
+        if self.copyComboBox.currentIndex() == 18:
+            clipboard.setText(self.gradientEditor._gradient.buildColorMap(GradientWeight.Cielab, GradientMix.Oklab))
+        if self.copyComboBox.currentIndex() == 19:
+            clipboard.setText(self.gradientEditor._gradient.buildColorMap(GradientWeight.Cielab, GradientMix.RGB))
+        if self.copyComboBox.currentIndex() == 20:
+            clipboard.setText(self.gradientEditor._gradient.buildColorMap(GradientWeight.Cielab, GradientMix.Cielab))
+    
         # Nearest cmap parameter entries
-        if self.copyComboBox.currentIndex() >= 15 and self.copyComboBox.currentIndex() < 21:
-            clipboard.setText(self._codeModel.data(self._codeModel.index(self.copyComboBox.currentIndex() - 6, 2)))
+        if self.copyComboBox.currentIndex() >= 21 and self.copyComboBox.currentIndex() < 27:
+            clipboard.setText(self._codeModel.data(self._codeModel.index(self.copyComboBox.currentIndex() - 12, 2)))
 
     def paste(self: Self) -> None:
         clipboard = QGuiApplication.clipboard()
