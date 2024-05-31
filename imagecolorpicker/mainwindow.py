@@ -153,6 +153,25 @@ class MainWindow(QMainWindow):
         if self.copyComboBox.currentIndex() >= 21 and self.copyComboBox.currentIndex() < 27:
             clipboard.setText(self._codeModel.data(self._codeModel.index(self.copyComboBox.currentIndex() - 12, 2)))
 
+        if self.copyComboBox.currentIndex() == 27:
+            clipboard.setText(self.gradientEditor._gradient.buildCSSGradient(GradientWeight.RGB, GradientMix.Oklab))
+        if self.copyComboBox.currentIndex() == 28:
+            clipboard.setText(self.gradientEditor._gradient.buildCSSGradient(GradientWeight.RGB, GradientMix.RGB))
+        if self.copyComboBox.currentIndex() == 29:
+            clipboard.setText(self.gradientEditor._gradient.buildCSSGradient(GradientWeight.RGB, GradientMix.Cielab))
+        if self.copyComboBox.currentIndex() == 30:
+            clipboard.setText(self.gradientEditor._gradient.buildCSSGradient(GradientWeight.Oklab, GradientMix.Oklab))
+        if self.copyComboBox.currentIndex() == 31:
+            clipboard.setText(self.gradientEditor._gradient.buildCSSGradient(GradientWeight.Oklab, GradientMix.RGB))
+        if self.copyComboBox.currentIndex() == 32:
+            clipboard.setText(self.gradientEditor._gradient.buildCSSGradient(GradientWeight.Oklab, GradientMix.Cielab))
+        if self.copyComboBox.currentIndex() == 33:
+            clipboard.setText(self.gradientEditor._gradient.buildCSSGradient(GradientWeight.Cielab, GradientMix.Oklab))
+        if self.copyComboBox.currentIndex() == 34:
+            clipboard.setText(self.gradientEditor._gradient.buildCSSGradient(GradientWeight.Cielab, GradientMix.RGB))
+        if self.copyComboBox.currentIndex() == 35:
+            clipboard.setText(self.gradientEditor._gradient.buildCSSGradient(GradientWeight.Cielab, GradientMix.Cielab))
+
     def paste(self: Self) -> None:
         clipboard = QGuiApplication.clipboard()
 

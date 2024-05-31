@@ -28,7 +28,7 @@
      <number>0</number>
     </property>
     <item>
-     <widget class="PickableColorLabel" name="picker">
+     <widget class="PickableColorLabel" name="picker" native="true">
       <property name="minimumSize">
        <size>
         <width>0</width>
@@ -266,6 +266,51 @@
            <string>(GLSL) near Oklab/RGB</string>
           </property>
          </item>
+         <item>
+          <property name="text">
+           <string>(CSS) Gradient Rgb/Oklab</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>(CSS) Gradient Rgb/Rgb</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>(CSS) Gradient Rgb/Cielab</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>(CSS) Gradient Oklab/Oklab</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>(CSS) Gradient Oklab/Rgb</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>(CSS) Gradient Oklab/Cielab</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>(CSS) Gradient Cielab/Oklab</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>(CSS) Gradient Cielab/Rgb</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>(CSS) Gradient Cielab/Cielab</string>
+          </property>
+         </item>
         </widget>
        </item>
       </layout>
@@ -292,7 +337,7 @@
    <widget class="QWidget" name="dockWidgetContents_2">
     <layout class="QVBoxLayout" name="verticalLayout_3">
      <item>
-      <widget class="GradientEditor" name="gradientEditor"/>
+      <widget class="GradientEditor" name="gradientEditor" native="true"/>
      </item>
     </layout>
    </widget>

@@ -27,6 +27,7 @@ from imagecolorpicker.color import (
     ColorSpace,
 )
 from functools import partial
+from PyQt6.QtGui import QColor
 
 class GradientWeight(IntEnum):
     Unweighted = 0x0
@@ -164,7 +165,7 @@ class ColorGradient:
         amount: int = 256,
         weight: GradientWeight = GradientWeight.Oklab,
         mix: GradientMix = GradientMix.Oklab,
-    ) -> Tuple[float]:
+    ) -> List[vec3]:
         t = linspace(0., 1., amount)
         sampledColors: List[Color] = list(map(
             lambda _amount: self.evaluate(_amount, weight, mix),
@@ -236,6 +237,36 @@ class ColorGradient:
         weight=weight.name,
         slug=slug,
     )
+
+    @staticmethod
+    def evaluateFit(t: float, fit: List[vec3]) -> vec3:
+        result: vec3 = vec3(0)
+        for parameterIndex in range(len(fit)):
+            parameter: vec3 = fit[parameterIndex]
+            result += parameter * pow(t, float(parameterIndex))
+        return result
+
+    def buildCSSGradient(
+        self: Self,
+        weight: GradientWeight,
+        mix: GradientMix,
+    ) -> str:
+        fitresult: List[vec3] = self.fit(256, weight, mix)
+        amounts: List[float] = list(map(float,range(101)))
+
+        newcolors = list(map(
+            lambda amount: ColorGradient.evaluateFit(float(amount) / 100., fitresult),
+            amounts,
+        ))
+
+        return """linear-gradient({colors});""".format(
+            colors=', '.join(map(
+                lambda resultIndex: '{color}'.format(
+                    color=QColor.fromRgbF(*newcolors[resultIndex]).name(),
+                ),
+                range(len(newcolors)),
+            )),
+        )
 
     @staticmethod
     def polynomial(t: float, *c: Tuple[float]) -> float:
