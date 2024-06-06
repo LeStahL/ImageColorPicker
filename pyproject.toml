@@ -17,11 +17,11 @@ lmfit = "^1.2.2"
 pyopengl = "^3.1.7"
 jinja2 = "^3.1.2"
 parse = "^1.19.1"
+pip = "^24.0"
 
 [tool.poetry.group.dev.dependencies]
 pyinstaller = "^6.0.0"
 distro = "^1.8.0"
-pyqt6-tools = "^6.4.2.3.3"
 
 [build-system]
 requires = ["poetry-core"]
