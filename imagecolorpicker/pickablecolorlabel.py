@@ -36,6 +36,10 @@ class PickableColorLabel(QWidget):
         self._color: QColor = QColor()
         self._picking: bool = False
 
+    @property
+    def components(self: Self) -> Tuple[float]:
+        return self._color.redF(), self._color.greenF(), self._color.blueF()
+
     def paintEvent(self: Self, a0: Optional[QPaintEvent]) -> None:
         super().paintEvent(a0)
 

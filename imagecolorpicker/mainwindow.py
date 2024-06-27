@@ -9,7 +9,11 @@ from os.path import (
 )
 from sys import exit
 from imagecolorpicker.colorgradient import *
-from imagecolorpicker.codemodel import *
+from imagecolorpicker.pickablecolorlabel import PickableColorLabel
+from imagecolorpicker.representation import Representation
+from imagecolorpicker.language import Language
+from imagecolorpicker.gradienteditor import GradientEditor
+
 
 class MainWindow(QMainWindow):
     UIFile = "mainwindow.ui"
@@ -25,6 +29,7 @@ class MainWindow(QMainWindow):
         loadUi(join(dirname(__file__), MainWindow.UIFile), self)
         self.setWindowIcon(QIcon(join(dirname(__file__), MainWindow.IconFile)))
 
+        self.picker: PickableColorLabel
         self.picker.hovered.connect(lambda cursor: self.statusBar().showMessage('Position: x = {}, y = {}'.format(cursor.x(), cursor.y())))
         self.picker.picked.connect(self._updatePickInformation)
         self.actionOpen.triggered.connect(self.open)
@@ -32,13 +37,10 @@ class MainWindow(QMainWindow):
         self.actionCopy.triggered.connect(self.copy)
         self.actionPaste.triggered.connect(self.paste)
         self.actionAbout.triggered.connect(self.about)
+        self.gradientEditor: GradientEditor
         self.gradientEditor.doubleClicked.connect(self.updateGradientViewWithColor)
 
-        self._codeModel = CodeModel()
-        self._codeModel.dataChanged.connect(self.representationChanged)
-        self.codeView.setModel(self._codeModel)
-        self.codeView.resizeColumnsToContents()
-
+        self.toolBar: QToolBar
         self.degreeLabel = QLabel(self.toolBar)
         self.degreeLabel.setText("Degree: ")
         self.toolBar.addWidget(self.degreeLabel)
@@ -48,6 +50,7 @@ class MainWindow(QMainWindow):
         self.polynomialDegreeSpinBox.setMaximum(7)
         self.polynomialDegreeSpinBox.setValue(6)
         self.polynomialDegreeSpinBox.valueChanged.connect(self.degreeChanged)
+        self.polynomialDegreeSpinBox.setMinimumWidth(100)
         self.toolBar.addWidget(self.polynomialDegreeSpinBox)
 
         self.colorCountLabel = QLabel(self)
@@ -59,6 +62,7 @@ class MainWindow(QMainWindow):
         self.colorCountSpinBox.setMaximum(15)
         self.colorCountSpinBox.setValue(8)
         self.colorCountSpinBox.valueChanged.connect(self.colorCountChanged)
+        self.colorCountSpinBox.setMinimumWidth(100)
         self.toolBar.addWidget(self.colorCountSpinBox)
     
         self.slugLabel = QLabel(self)
@@ -67,8 +71,47 @@ class MainWindow(QMainWindow):
 
         self.slugLineEdit = QLineEdit(self)
         self.slugLineEdit.setMaximumWidth(100)
+        self.slugLineEdit.setMinimumWidth(100)
         self.slugLineEdit.setText("_example")
         self.toolBar.addWidget(self.slugLineEdit)
+
+        self.languageLabel = QLabel(self)
+        self.languageLabel.setText("Language: ")
+        self.toolBar.addWidget(self.languageLabel)
+
+        self.languageDropDown = QComboBox(self)
+        for language in Language:
+            self.languageDropDown.addItem(language.name, language)
+        self.toolBar.addWidget(self.languageDropDown)
+
+        self.languageLabel = QLabel(self)
+        self.languageLabel.setText("Representation: ")
+        self.toolBar.addWidget(self.languageLabel)
+
+        self.representationDropDown = QComboBox(self)
+        for representation in Representation:
+            self.representationDropDown.addItem(representation.name, representation)
+        self.toolBar.addWidget(self.representationDropDown)
+
+        self.languageLabel = QLabel(self)
+        self.languageLabel.setText("Weigh: ")
+        self.toolBar.addWidget(self.languageLabel)
+
+        self.weightDropDown = QComboBox(self)
+        for weight in GradientWeight:
+            self.weightDropDown.addItem(weight.name, weight)
+        self.toolBar.addWidget(self.weightDropDown)
+
+        self.languageLabel = QLabel(self)
+        self.languageLabel.setText("Mix: ")
+        self.toolBar.addWidget(self.languageLabel)
+
+        self.mixDropDown = QComboBox(self)
+        for mix in GradientMix:
+            self.mixDropDown.addItem(mix.name, mix)
+        self.toolBar.addWidget(self.mixDropDown)
+
+        self.colorLabel: QLabel
 
     def degreeChanged(self: Self, value: int) -> None:
         ColorGradient.Degree = value
@@ -83,21 +126,6 @@ class MainWindow(QMainWindow):
 
     def _updatePickInformation(self: Self, cursor: QPointF, color: QColor) -> None:
         self.colorLabel.setStyleSheet('background-color:{}'.format(color.name()))
-
-        nearestWeights: List[float] = []
-        for _, _, colorMap in self.gradientEditor._allColorMaps:
-            nearestWeights.append(
-                self.gradientEditor._gradient.nearestWeightInColorMap(
-                    colorMap,
-                    vec3(
-                        color.redF(),
-                        color.greenF(),
-                        color.blueF(),
-                    ),
-                ),
-            )
-
-        self._codeModel.load(color, nearestWeights, self.slugLineEdit.text())
 
     def open(self: Self) -> None:
         filename, _ = QFileDialog.getOpenFileName(
@@ -118,59 +146,76 @@ class MainWindow(QMainWindow):
 
     def copy(self: Self) -> None:
         clipboard = QGuiApplication.clipboard()
-        
-        # Single color entries
-        if self.copyComboBox.currentIndex() <= 8:
-            clipboard.setText(self._codeModel.data(self._codeModel.index(self.copyComboBox.currentIndex(), 2)))
 
-        # Gradient entries
-        if self.copyComboBox.currentIndex() == 9:
-            clipboard.setText(self.gradientEditor._gradient.buildColorMap(GradientWeight.Unweighted, GradientMix.Oklab))
-        if self.copyComboBox.currentIndex() == 10:
-            clipboard.setText(self.gradientEditor._gradient.buildColorMap(GradientWeight.Unweighted, GradientMix.RGB))
-        if self.copyComboBox.currentIndex() == 11:
-            clipboard.setText(self.gradientEditor._gradient.buildColorMap(GradientWeight.Unweighted, GradientMix.Cielab))
-        if self.copyComboBox.currentIndex() == 12:
-            clipboard.setText(self.gradientEditor._gradient.buildColorMap(GradientWeight.RGB, GradientMix.Oklab))
-        if self.copyComboBox.currentIndex() == 13:
-            clipboard.setText(self.gradientEditor._gradient.buildColorMap(GradientWeight.RGB, GradientMix.RGB))
-        if self.copyComboBox.currentIndex() == 14:
-            clipboard.setText(self.gradientEditor._gradient.buildColorMap(GradientWeight.RGB, GradientMix.Cielab))
-        if self.copyComboBox.currentIndex() == 15:
-            clipboard.setText(self.gradientEditor._gradient.buildColorMap(GradientWeight.Oklab, GradientMix.Oklab))
-        if self.copyComboBox.currentIndex() == 16:
-            clipboard.setText(self.gradientEditor._gradient.buildColorMap(GradientWeight.Oklab, GradientMix.RGB))
-        if self.copyComboBox.currentIndex() == 17:
-            clipboard.setText(self.gradientEditor._gradient.buildColorMap(GradientWeight.Oklab, GradientMix.Cielab))
-        if self.copyComboBox.currentIndex() == 18:
-            clipboard.setText(self.gradientEditor._gradient.buildColorMap(GradientWeight.Cielab, GradientMix.Oklab))
-        if self.copyComboBox.currentIndex() == 19:
-            clipboard.setText(self.gradientEditor._gradient.buildColorMap(GradientWeight.Cielab, GradientMix.RGB))
-        if self.copyComboBox.currentIndex() == 20:
-            clipboard.setText(self.gradientEditor._gradient.buildColorMap(GradientWeight.Cielab, GradientMix.Cielab))
-    
-        # Nearest cmap parameter entries
-        if self.copyComboBox.currentIndex() >= 21 and self.copyComboBox.currentIndex() < 27:
-            clipboard.setText(self._codeModel.data(self._codeModel.index(self.copyComboBox.currentIndex() - 12, 2)))
-
-        if self.copyComboBox.currentIndex() == 27:
-            clipboard.setText(self.gradientEditor._gradient.buildCSSGradient(GradientWeight.RGB, GradientMix.Oklab))
-        if self.copyComboBox.currentIndex() == 28:
-            clipboard.setText(self.gradientEditor._gradient.buildCSSGradient(GradientWeight.RGB, GradientMix.RGB))
-        if self.copyComboBox.currentIndex() == 29:
-            clipboard.setText(self.gradientEditor._gradient.buildCSSGradient(GradientWeight.RGB, GradientMix.Cielab))
-        if self.copyComboBox.currentIndex() == 30:
-            clipboard.setText(self.gradientEditor._gradient.buildCSSGradient(GradientWeight.Oklab, GradientMix.Oklab))
-        if self.copyComboBox.currentIndex() == 31:
-            clipboard.setText(self.gradientEditor._gradient.buildCSSGradient(GradientWeight.Oklab, GradientMix.RGB))
-        if self.copyComboBox.currentIndex() == 32:
-            clipboard.setText(self.gradientEditor._gradient.buildCSSGradient(GradientWeight.Oklab, GradientMix.Cielab))
-        if self.copyComboBox.currentIndex() == 33:
-            clipboard.setText(self.gradientEditor._gradient.buildCSSGradient(GradientWeight.Cielab, GradientMix.Oklab))
-        if self.copyComboBox.currentIndex() == 34:
-            clipboard.setText(self.gradientEditor._gradient.buildCSSGradient(GradientWeight.Cielab, GradientMix.RGB))
-        if self.copyComboBox.currentIndex() == 35:
-            clipboard.setText(self.gradientEditor._gradient.buildCSSGradient(GradientWeight.Cielab, GradientMix.Cielab))
+        match self.languageDropDown.currentData():
+            case Language.GLSL:
+                match self.representationDropDown.currentData():
+                    case Representation.ColorMap:
+                        clipboard.setText(self.gradientEditor._gradient.buildColorMap(self.weightDropDown.currentData(), self.mixDropDown.currentData()))
+                    case Representation.Picked3ComponentColor:
+                        clipboard.setText('vec3({:.2f}, {:.2f}, {:.2f})'.format(*self.picker.components))
+                    case Representation.Picked4ComponentColor:
+                        clipboard.setText('vec4({:.2f}, {:.2f}, {:.2f}, 1)'.format(*self.picker.components))
+                    case Representation.PickedNearestGradientWeight:
+                        for weight, mix, colorMap in self.gradientEditor._allColorMaps:
+                            if weight == self.weightDropDown.currentData() and mix == self.mixDropDown.currentData():
+                                clipboard.setText('{:.2f}'.format(self.gradientEditor._gradient.nearestWeightInColorMap(colorMap, vec3(*self.picker.components))))
+                    case Representation.GradientColorArray:
+                        clipboard.setText('vec3[{}]({})'.format(
+                            len(self.gradientEditor._gradient._colors),
+                            ', '.join(map(
+                                str,
+                                self.gradientEditor._gradient._colors,
+                            )),
+                        ))
+                    case Representation.GradientWeightArray:
+                        weights = self.gradientEditor._gradient.determineWeights(self.weightDropDown.currentData())
+                        clipboard.setText('float[{}]({})'.format(
+                            len(weights),
+                            ', '.join(map(
+                                lambda weight: '{:.2f}'.format(weight),
+                                weights,
+                            )),
+                        ))
+            case Language.HLSL:
+                match self.representationDropDown.currentData():
+                    case Representation.ColorMap:
+                        clipboard.setText(self.gradientEditor._gradient.buildColorMap(self.weightDropDown.currentData(), self.mixDropDown.currentData()).replace('vec3', 'float3'))
+                    case Representation.Picked3ComponentColor:
+                        clipboard.setText('float3({:.2f}, {:.2f}, {:.2f})'.format(*self.picker.components))
+                    case Representation.Picked4ComponentColor:
+                        clipboard.setText('float4({:.2f}, {:.2f}, {:.2f}, 1)'.format(*self.picker.components))
+                    case Representation.PickedNearestGradientWeight:
+                        for weight, mix, colorMap in self.gradientEditor._allColorMaps:
+                            if weight == self.weightDropDown.currentData() and mix == self.mixDropDown.currentData():
+                                clipboard.setText('{:.2f}'.format(self.gradientEditor._gradient.nearestWeightInColorMap(colorMap, vec3(*self.picker.components))))
+                    case Representation.GradientColorArray:
+                        clipboard.setText('{{{}}}'.format(
+                            ', '.join(map(
+                                lambda color: ', '.join(map(lambda component: '{:.2f}'.format(component), color._color.to_tuple())),
+                                self.gradientEditor._gradient._colors,
+                            )),
+                        ))
+                    case Representation.GradientWeightArray:
+                        weights = self.gradientEditor._gradient.determineWeights(self.weightDropDown.currentData())
+                        clipboard.setText('{{{}}}'.format(
+                            ', '.join(map(
+                                lambda weight: '{:.2f}'.format(weight),
+                                weights,
+                            )),
+                        ))
+            case Language.CSS:
+                match self.representationDropDown.currentData():
+                    case Representation.ColorMap:
+                        clipboard.setText(self.gradientEditor._gradient.buildCSSGradient(self.weightDropDown.currentData(), self.mixDropDown.currentData()))
+                    case Representation.Picked3ComponentColor:
+                        clipboard.setText(self.picker._color.name())
+            case Language.SVG:
+                match self.representationDropDown.currentData():
+                    case Representation.ColorMap:
+                        clipboard.setText(self.gradientEditor._gradient.buildSVGGradient(self.weightDropDown.currentData(), self.mixDropDown.currentData()))
+                    case Representation.Picked3ComponentColor:
+                        clipboard.setText(self.picker._color.name()) 
 
     def paste(self: Self) -> None:
         clipboard = QGuiApplication.clipboard()

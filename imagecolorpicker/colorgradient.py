@@ -30,15 +30,15 @@ from functools import partial
 from PyQt6.QtGui import QColor
 
 class GradientWeight(IntEnum):
-    Unweighted = 0x0
-    RGB = 0x1
     Oklab = 0x2
     Cielab = 0x3
+    RGB = 0x1
+    Unweighted = 0x0
 
 class GradientMix(IntEnum):
-    RGB = 0x0
     Oklab = 0x1
     Cielab = 0x2
+    RGB = 0x0
 
 class ColorGradient:
     Degree = 6
@@ -263,6 +263,31 @@ class ColorGradient:
             colors=', '.join(map(
                 lambda resultIndex: '{color}'.format(
                     color=QColor.fromRgbF(*newcolors[resultIndex]).name(),
+                ),
+                range(len(newcolors)),
+            )),
+        )
+    
+    def buildSVGGradient(
+        self: Self,
+        weight: GradientWeight,
+        mix: GradientMix,
+    ) -> str:
+        fitresult: List[vec3] = self.fit(256, weight, mix)
+        amounts: List[float] = list(map(float,range(101)))
+
+        newcolors = list(map(
+            lambda amount: ColorGradient.evaluateFit(float(amount) / 100., fitresult),
+            amounts,
+        ))
+
+        return """<linearGradient>
+    {colors}
+</linearGradient>""".format(
+            colors='\n    '.join(map(
+                lambda resultIndex: '<stop stop-color="{color}" offset="{offset}%" />'.format(
+                    color=QColor.fromRgbF(*newcolors[resultIndex]).name(),
+                    offset=int(amounts[resultIndex]),
                 ),
                 range(len(newcolors)),
             )),

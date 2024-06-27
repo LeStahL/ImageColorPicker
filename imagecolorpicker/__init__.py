@@ -7,4 +7,3 @@ from imagecolorpicker.colorgradient import *
 from imagecolorpicker.gradienteditor import *
 from imagecolorpicker.gradientmodel import *
 from imagecolorpicker.gradientpreview import *
-from imagecolorpicker.codemodel import *
