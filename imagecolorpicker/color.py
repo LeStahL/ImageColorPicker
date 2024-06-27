@@ -138,7 +138,7 @@ class Color:
         self._space = space
 
     def __repr__(self) -> str:
-        return self._color.__repr__().replace('vec3', 'Color')
+        return 'vec3({}, {}, {})'.format(*self._color.to_tuple())
 
     @staticmethod
     def distance(c1: Self, c2: Self) -> float:
