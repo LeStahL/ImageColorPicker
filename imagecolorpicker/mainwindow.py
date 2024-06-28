@@ -13,6 +13,9 @@ from imagecolorpicker.pickablecolorlabel import PickableColorLabel
 from imagecolorpicker.representation import Representation
 from imagecolorpicker.language import Language
 from imagecolorpicker.gradienteditor import GradientEditor
+from Pylette import extract_colors
+from tempfile import TemporaryDirectory
+from pathlib import Path
 
 
 class MainWindow(QMainWindow):
@@ -112,6 +115,34 @@ class MainWindow(QMainWindow):
         self.toolBar.addWidget(self.mixDropDown)
 
         self.colorLabel: QLabel
+
+        self.actionExtract_Palette: QAction
+        self.actionExtract_Palette.triggered.connect(self.extractPalette)
+
+    def extractPalette(self: Self) -> None:
+        with TemporaryDirectory() as directory:
+            imagePath: Path = Path(directory) / 'image.jpg'
+            self.picker._image.save(str(imagePath))
+            palette = extract_colors(
+                image=str(Path(directory) / 'image.jpg'),
+                palette_size=int(self.colorCountSpinBox.value()),
+                resize=False,
+                # mode='MC',
+                mode='KM',
+                sort_mode='luminance',
+            )
+            palette = list(map(
+                lambda color: QColor.fromRgb(*color.rgb),
+                palette,
+            ))
+            palette = list(sorted(palette, key=lambda color: color.hue()))
+            for colorIndex in range(int(self.colorCountSpinBox.value())):
+                index = self.gradientEditor._gradientModel.index(colorIndex, 0)
+                self.gradientEditor._gradientModel.setData(index, palette[colorIndex])
+                self.gradientEditor._gradient = index.model()._gradient
+                self.gradientEditor._allColorMaps = index.model()._allColorMaps
+                self.gradientEditor.gradientPreview.changeColorMaps(index.model()._allColorMaps)
+
 
     def degreeChanged(self: Self, value: int) -> None:
         ColorGradient.Degree = value
