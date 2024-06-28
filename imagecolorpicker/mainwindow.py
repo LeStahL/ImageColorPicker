@@ -224,6 +224,13 @@ class MainWindow(QMainWindow):
             self.picker.setImage(clipboard.image())
         if clipboard.mimeData().hasHtml():
             self.picker.loadFromHTML(clipboard.mimeData().html())
+        if clipboard.mimeData().hasUrls():
+            if len(clipboard.mimeData().urls()) == 0:
+                return
+
+            # Only load first URL.
+            url: QUrl = clipboard.mimeData().urls()[0]
+            self.picker.loadFromUrl(url)
 
     def about(self: Self) -> None:
         aboutMessage = QMessageBox()

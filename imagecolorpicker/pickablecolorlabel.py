@@ -3,6 +3,11 @@ from PyQt6 import QtGui
 from PyQt6.QtCore import *
 from PyQt6.QtWidgets import *
 from PyQt6.QtGui import *
+from PyQt6.QtNetwork import (
+    QNetworkAccessManager,
+    QNetworkRequest,
+    QNetworkReply,
+)
 from sys import argv
 from os.path import (
     join,
@@ -36,6 +41,8 @@ class PickableColorLabel(QWidget):
         self._color: QColor = QColor()
         self._picking: bool = False
 
+        self._networkManager: QNetworkAccessManager = QNetworkAccessManager()
+
     @property
     def components(self: Self) -> Tuple[float]:
         return self._color.redF(), self._color.greenF(), self._color.blueF()
@@ -64,7 +71,6 @@ class PickableColorLabel(QWidget):
         painter.drawEllipse(QRectF(absolutePosition - .5 * QPointF(absoluteCursorSize, absoluteCursorSize) - QPointF(2.,2.), QSizeF(absoluteCursorSize + 4., absoluteCursorSize + 4.)))
         painter.drawEllipse(QRectF(absolutePosition - .5 * QPointF(absoluteCursorSize, absoluteCursorSize) + QPointF(2.,2.), QSizeF(absoluteCursorSize - 4., absoluteCursorSize - 4.)))
         
-
         pen: QPen = painter.pen()
         pen.setWidthF(4)
         pen.setColor(self._color)
@@ -119,7 +125,13 @@ class PickableColorLabel(QWidget):
     def dragEnterEvent(self: Self, a0: QDragEnterEvent) -> None:
         super().dragEnterEvent(a0)
 
-        if a0.mimeData().hasImage() or a0.mimeData().hasHtml():
+        # print(a0.mimeData().formats())
+
+        if True in [
+            a0.mimeData().hasImage(),
+            a0.mimeData().hasHtml(),
+            a0.mimeData().hasUrls(),
+        ]:
             a0.acceptProposedAction()
 
     def dropEvent(self: Self, a0: QDropEvent) -> None:
@@ -127,8 +139,22 @@ class PickableColorLabel(QWidget):
 
         if a0.mimeData().hasImage():
             self.setImage(a0.mimeData().imageData())
-        if a0.mimeData().hasHtml():
+        elif a0.mimeData().hasHtml():
             self.loadFromHTML(a0.mimeData().html())
+        elif a0.mimeData().hasUrls():
+            if len(a0.mimeData().urls()) == 0:
+                return
+
+            # Only load first URL.
+            url: QUrl = a0.mimeData().urls()[0]
+            self.loadFromUrl(url)
+
+    def loadFromUrl(self: Self, url: QUrl) -> None:
+        request: QNetworkRequest = QNetworkRequest(url)
+        reply: QNetworkReply = self._networkManager.get(request)
+        result: bytes = reply.readAll()
+
+        self.loadFromBinary(result)
 
     def loadFromHTML(self: Self, html: str) -> None:
         try:
@@ -138,15 +164,18 @@ class PickableColorLabel(QWidget):
             )
             imgTags = html.findAll('img')
             if len(imgTags) != 0:
-                    src: str = imgTags[0]['src']
-                    pixmap = QPixmap()
-                    if src.startswith('data:image/png;base64,'):
-                        src = src.replace('data:image/png;base64,', '')
-                        pixmap.loadFromData(b64decode(src))
-                    else:
-                        response = get(src)
-                        pixmap.loadFromData(response.content)
-                    self.setImage(pixmap.toImage())
+                src: str = imgTags[0]['src']
+                pixmap = QPixmap()
+                if src.startswith('data:image/png;base64,'):
+                    src = src.replace('data:image/png;base64,', '')
+                    pixmap.loadFromData(b64decode(src))
+                elif src.startswith('data:image/jpeg;base64,'):
+                    src = src.replace('data:image/jpeg;base64,', '')
+                    pixmap.loadFromData(b64decode(src))
+                else:
+                    response = get(src)
+                    pixmap.loadFromData(response.content)
+                self.setImage(pixmap.toImage())
         except:
             print_exc()
             print("Attempted to load unsupported html.")

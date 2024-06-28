@@ -7,7 +7,7 @@ out vec4 oColor;
 {%- for (weight, mix, cmap) in colorMaps %}
 vec3 cmap_{{ weight.name }}{{ mix.name }}(float t) {
     {%- for color in cmap %}
-    const vec3 c{{ loop.index - 1 }} = {{ color }};
+    const vec3 c{{ loop.index - 1 }} = vec3({{ color.x }}, {{ color.y }}, {{ color.z }});
     {%- endfor %}
 
     return c0
