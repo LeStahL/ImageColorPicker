@@ -65,7 +65,7 @@ class MainWindow(QMainWindow):
 
         self.colorCountSpinBox = QSpinBox(self)
         self.colorCountSpinBox.setMinimum(3)
-        self.colorCountSpinBox.setMaximum(15)
+        self.colorCountSpinBox.setMaximum(64)
         self.colorCountSpinBox.setValue(8)
         self.colorCountSpinBox.valueChanged.connect(self.colorCountChanged)
         self.colorCountSpinBox.setMinimumWidth(100)
