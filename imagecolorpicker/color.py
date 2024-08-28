@@ -149,3 +149,6 @@ class Color:
         result = deepcopy(c1)
         result._color = mix(c1._color, c2._color, amount)
         return result
+
+    def toList(self: Self) -> List[float]:
+        return [self._color.x, self._color.y, self._color.z]

@@ -54,6 +54,9 @@
     </property>
     <addaction name="actionOpen"/>
     <addaction name="separator"/>
+    <addaction name="actionExport_Palette"/>
+    <addaction name="actionImport_Palette"/>
+    <addaction name="separator"/>
     <addaction name="actionQuit"/>
    </widget>
    <widget class="QMenu" name="menuEdit">
@@ -206,6 +209,16 @@
   <action name="actionExtract_Palette">
    <property name="text">
     <string>Extract Palette</string>
+   </property>
+  </action>
+  <action name="actionExport_Palette">
+   <property name="text">
+    <string>Export Palette...</string>
+   </property>
+  </action>
+  <action name="actionImport_Palette">
+   <property name="text">
+    <string>Import Palette...</string>
    </property>
   </action>
  </widget>

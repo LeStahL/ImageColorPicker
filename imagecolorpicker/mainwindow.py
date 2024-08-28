@@ -16,6 +16,7 @@ from imagecolorpicker.gradienteditor import GradientEditor
 from Pylette import extract_colors
 from tempfile import TemporaryDirectory
 from pathlib import Path
+import rtoml
 
 
 class MainWindow(QMainWindow):
@@ -40,6 +41,8 @@ class MainWindow(QMainWindow):
         self.actionCopy.triggered.connect(self.copy)
         self.actionPaste.triggered.connect(self.paste)
         self.actionAbout.triggered.connect(self.about)
+        self.actionExport_Palette.triggered.connect(self.exportPalette)
+        self.actionImport_Palette.triggered.connect(self.importPalette)
         self.gradientEditor: GradientEditor
         self.gradientEditor.doubleClicked.connect(self.updateGradientViewWithColor)
 
@@ -276,3 +279,67 @@ class MainWindow(QMainWindow):
         self.gradientEditor._gradient = index.model()._gradient
         self.gradientEditor._allColorMaps = index.model()._allColorMaps
         self.gradientEditor.gradientPreview.changeColorMaps(index.model()._allColorMaps)
+
+    def exportPalette(self: Self) -> None:
+        settings = QSettings()
+        filename, _ = QFileDialog.getSaveFileName(
+            None,
+            'Save palette...',
+            settings.value("save_palette_path", QDir.homePath()),
+            "All Supported Files (*.toml);;TOML project files (*.toml)",
+        )
+
+        if filename == "":
+            return
+
+        if len(Path(filename).suffixes) == 0:
+            filename += '.toml'
+
+        file_info = QFileInfo(filename)
+        settings.setValue("save_palette_path", file_info.absoluteDir().absolutePath())
+        suffix: str = Path(filename).suffix
+        
+        if suffix == '.toml':
+            Path(filename).write_text(rtoml.dumps({
+                'palette': {
+                    'name': self.slugLineEdit.text(),
+                    'colors': list(map(
+                        lambda color: color.toList(),
+                        self.gradientEditor._gradient._colors,
+                    )),
+                },
+            }, pretty=True))
+
+    def importPalette(self: Self) -> None:
+        settings = QSettings()
+        filename, _ = QFileDialog.getOpenFileName(
+            None,
+            'Load palette...',
+            settings.value("load_palette_path", QDir.homePath()),
+            "All Supported Files (*.toml);;TOML project files (*.toml)",
+        )
+
+        if filename == "":
+            return
+
+        if len(Path(filename).suffixes) == 0:
+            filename += '.toml'
+
+        file_info = QFileInfo(filename)
+        settings.setValue("load_palette_path", file_info.absoluteDir().absolutePath())
+        suffix: str = Path(filename).suffix
+        
+        if suffix == '.toml':
+            paletteObject: Dict = rtoml.loads(Path(filename).read_text())
+            self.colorCountSpinBox.setValue(len(paletteObject['palette']['colors']))
+            gradient: ColorGradient = ColorGradient(*tuple(map(
+                lambda colorList: Color(*colorList),
+                paletteObject['palette']['colors'],
+            )))
+            allColorMaps: List[Tuple[GradientWeight, GradientMix, List[vec3]]] = gradient.allColorMaps()
+            self.gradientEditor._gradientModel.load(allColorMaps, gradient)
+            self.gradientEditor._gradient = gradient
+            self.gradientEditor._allColorMaps = allColorMaps
+            self.gradientEditor._gradientModel.reload()
+            self.gradientEditor.gradientPreview.changeColorMaps(allColorMaps)
+            self.update()
