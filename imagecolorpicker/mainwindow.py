@@ -180,76 +180,72 @@ class MainWindow(QMainWindow):
 
     def copy(self: Self) -> None:
         clipboard = QGuiApplication.clipboard()
-
-        match self.languageDropDown.currentData():
-            case Language.GLSL:
-                match self.representationDropDown.currentData():
-                    case Representation.ColorMap:
-                        clipboard.setText(self.gradientEditor._gradient.buildColorMap(self.weightDropDown.currentData(), self.mixDropDown.currentData()))
-                    case Representation.Picked3ComponentColor:
-                        clipboard.setText('vec3({:.2f}, {:.2f}, {:.2f})'.format(*self.picker.components))
-                    case Representation.Picked4ComponentColor:
-                        clipboard.setText('vec4({:.2f}, {:.2f}, {:.2f}, 1)'.format(*self.picker.components))
-                    case Representation.PickedNearestGradientWeight:
-                        for weight, mix, colorMap in self.gradientEditor._allColorMaps:
-                            if weight == self.weightDropDown.currentData() and mix == self.mixDropDown.currentData():
-                                clipboard.setText('{:.2f}'.format(self.gradientEditor._gradient.nearestWeightInColorMap(colorMap, vec3(*self.picker.components))))
-                    case Representation.GradientColorArray:
-                        clipboard.setText('vec3[{}]({})'.format(
-                            len(self.gradientEditor._gradient._colors),
-                            ', '.join(map(
-                                str,
-                                self.gradientEditor._gradient._colors,
-                            )),
-                        ))
-                    case Representation.GradientWeightArray:
-                        weights = self.gradientEditor._gradient.determineWeights(self.weightDropDown.currentData())
-                        clipboard.setText('float[{}]({})'.format(
-                            len(weights),
-                            ', '.join(map(
-                                lambda weight: '{:.2f}'.format(weight),
-                                weights,
-                            )),
-                        ))
-            case Language.HLSL:
-                match self.representationDropDown.currentData():
-                    case Representation.ColorMap:
-                        clipboard.setText(self.gradientEditor._gradient.buildColorMap(self.weightDropDown.currentData(), self.mixDropDown.currentData()).replace('vec3', 'float3'))
-                    case Representation.Picked3ComponentColor:
-                        clipboard.setText('float3({:.2f}, {:.2f}, {:.2f})'.format(*self.picker.components))
-                    case Representation.Picked4ComponentColor:
-                        clipboard.setText('float4({:.2f}, {:.2f}, {:.2f}, 1)'.format(*self.picker.components))
-                    case Representation.PickedNearestGradientWeight:
-                        for weight, mix, colorMap in self.gradientEditor._allColorMaps:
-                            if weight == self.weightDropDown.currentData() and mix == self.mixDropDown.currentData():
-                                clipboard.setText('{:.2f}'.format(self.gradientEditor._gradient.nearestWeightInColorMap(colorMap, vec3(*self.picker.components))))
-                    case Representation.GradientColorArray:
-                        clipboard.setText('{{{}}}'.format(
-                            ', '.join(map(
-                                lambda color: ', '.join(map(lambda component: '{:.2f}'.format(component), color._color.to_tuple())),
-                                self.gradientEditor._gradient._colors,
-                            )),
-                        ))
-                    case Representation.GradientWeightArray:
-                        weights = self.gradientEditor._gradient.determineWeights(self.weightDropDown.currentData())
-                        clipboard.setText('{{{}}}'.format(
-                            ', '.join(map(
-                                lambda weight: '{:.2f}'.format(weight),
-                                weights,
-                            )),
-                        ))
-            case Language.CSS:
-                match self.representationDropDown.currentData():
-                    case Representation.ColorMap:
-                        clipboard.setText(self.gradientEditor._gradient.buildCSSGradient(self.weightDropDown.currentData(), self.mixDropDown.currentData()))
-                    case Representation.Picked3ComponentColor:
-                        clipboard.setText(self.picker._color.name())
-            case Language.SVG:
-                match self.representationDropDown.currentData():
-                    case Representation.ColorMap:
-                        clipboard.setText(self.gradientEditor._gradient.buildSVGGradient(self.weightDropDown.currentData(), self.mixDropDown.currentData()))
-                    case Representation.Picked3ComponentColor:
-                        clipboard.setText(self.picker._color.name()) 
+        currentLanguage: Language = self.languageDropDown.currentData()
+        currentRepresentation: Representation = self.representationDropDown.currentData()
+        if currentLanguage == Language.GLSL:
+            if currentRepresentation == Representation.ColorMap:
+                clipboard.setText(self.gradientEditor._gradient.buildColorMap(self.weightDropDown.currentData(), self.mixDropDown.currentData()))
+            elif currentRepresentation == Representation.Picked3ComponentColor:
+                clipboard.setText('vec3({:.2f}, {:.2f}, {:.2f})'.format(*self.picker.components))
+            elif currentRepresentation == Representation.Picked4ComponentColor:
+                clipboard.setText('vec4({:.2f}, {:.2f}, {:.2f}, 1)'.format(*self.picker.components))
+            elif currentRepresentation == Representation.PickedNearestGradientWeight:
+                for weight, mix, colorMap in self.gradientEditor._allColorMaps:
+                    if weight == self.weightDropDown.currentData() and mix == self.mixDropDown.currentData():
+                        clipboard.setText('{:.2f}'.format(self.gradientEditor._gradient.nearestWeightInColorMap(colorMap, vec3(*self.picker.components))))
+            elif currentRepresentation == Representation.GradientColorArray:
+                clipboard.setText('vec3[{}]({})'.format(
+                    len(self.gradientEditor._gradient._colors),
+                    ', '.join(map(
+                        str,
+                        self.gradientEditor._gradient._colors,
+                    )),
+                ))
+            elif currentRepresentation == Representation.GradientWeightArray:
+                weights = self.gradientEditor._gradient.determineWeights(self.weightDropDown.currentData())
+                clipboard.setText('float[{}]({})'.format(
+                    len(weights),
+                    ', '.join(map(
+                        lambda weight: '{:.2f}'.format(weight),
+                        weights,
+                    )),
+                ))
+        elif currentLanguage == Language.HLSL:
+            if currentRepresentation == Representation.ColorMap:
+                clipboard.setText(self.gradientEditor._gradient.buildColorMap(self.weightDropDown.currentData(), self.mixDropDown.currentData()).replace('vec3', 'float3'))
+            elif currentRepresentation == Representation.Picked3ComponentColor:
+                clipboard.setText('float3({:.2f}, {:.2f}, {:.2f})'.format(*self.picker.components))
+            elif currentRepresentation == Representation.Picked4ComponentColor:
+                clipboard.setText('float4({:.2f}, {:.2f}, {:.2f}, 1)'.format(*self.picker.components))
+            elif currentRepresentation == Representation.PickedNearestGradientWeight:
+                for weight, mix, colorMap in self.gradientEditor._allColorMaps:
+                    if weight == self.weightDropDown.currentData() and mix == self.mixDropDown.currentData():
+                        clipboard.setText('{:.2f}'.format(self.gradientEditor._gradient.nearestWeightInColorMap(colorMap, vec3(*self.picker.components))))
+            elif currentRepresentation == Representation.GradientColorArray:
+                clipboard.setText('{{{}}}'.format(
+                    ', '.join(map(
+                        lambda color: ', '.join(map(lambda component: '{:.2f}'.format(component), color._color.to_tuple())),
+                        self.gradientEditor._gradient._colors,
+                    )),
+                ))
+            elif currentRepresentation == Representation.GradientWeightArray:
+                weights = self.gradientEditor._gradient.determineWeights(self.weightDropDown.currentData())
+                clipboard.setText('{{{}}}'.format(
+                    ', '.join(map(
+                        lambda weight: '{:.2f}'.format(weight),
+                        weights,
+                    )),
+                ))
+        elif currentLanguage == Language.CSS:
+            if currentRepresentation == Representation.ColorMap:
+                clipboard.setText(self.gradientEditor._gradient.buildCSSGradient(self.weightDropDown.currentData(), self.mixDropDown.currentData()))
+            elif currentRepresentation == Representation.Picked3ComponentColor:
+                clipboard.setText(self.picker._color.name())
+        elif currentLanguage == Language.SVG:
+            if currentRepresentation == Representation.ColorMap:
+                clipboard.setText(self.gradientEditor._gradient.buildSVGGradient(self.weightDropDown.currentData(), self.mixDropDown.currentData()))
+            elif currentRepresentation == Representation.Picked3ComponentColor:
+                clipboard.setText(self.picker._color.name())
 
     def paste(self: Self) -> None:
         clipboard = QGuiApplication.clipboard()

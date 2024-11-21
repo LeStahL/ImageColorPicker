@@ -34,3 +34,13 @@ class GradientEditor(QWidget):
         self._gradientModel.load(self._allColorMaps, self._gradient)
         self.tableView.resizeColumnsToContents()
         self.tableView.doubleClicked.connect(self.doubleClicked.emit)
+
+        self.descriptionLayout: QVBoxLayout
+        self._labels: List[QLabel] = []
+        for weight, mix, _ in self._allColorMaps:
+            label: QLabel = QLabel(f"{GradientWeight(weight).name} -> {GradientMix(mix).name}")
+            self._labels.append(label)
+
+        for label in reversed(self._labels):
+            self.descriptionLayout.addWidget(label)
+        self.update()
