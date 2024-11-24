@@ -24,6 +24,7 @@ rtoml = "^0.11.0"
 [tool.poetry.group.dev.dependencies]
 pyinstaller = "^6.0.0"
 distro = "^1.8.0"
+pygit2 = "^1.16.0"
 
 [build-system]
 requires = ["poetry-core"]

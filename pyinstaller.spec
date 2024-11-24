@@ -2,14 +2,19 @@
 from os.path import abspath, join
 from zipfile import ZipFile
 from platform import system
+from imagecolorpicker.version import Version
+from pathlib import Path
 
 moduleName = 'imagecolorpicker'
-rootPath = abspath('.')
-buildPath = join(rootPath, 'build')
-distPath = join(rootPath, 'dist')
-sourcePath = join(rootPath, moduleName)
+rootPath = Path(".")
+buildPath = rootPath / 'build'
+distPath = rootPath / 'dist'
+sourcePath = rootPath / moduleName
 
 block_cipher = None
+
+version = Version()
+version.generateVersionModule(buildPath)
 
 a = Analysis(
     [
@@ -18,6 +23,7 @@ a = Analysis(
     pathex=[],
     binaries=[],
     datas=[
+        (buildPath / '{}.py'.format(Version.VersionModuleName), moduleName),
         (join(sourcePath, 'mainwindow.ui'), moduleName),
         (join(sourcePath, 'gradienteditor.ui'), moduleName),
         (join(sourcePath, 'team210.ico'), moduleName),
@@ -26,6 +32,8 @@ a = Analysis(
     ],
     hiddenimports=[
         '_cffi_backend',
+        'scipy._lib.array_api_compat.numpy.fft',
+        'scipy.special._special_ufuncs',
     ],
     hookspath=[],
     hooksconfig={},
@@ -45,7 +53,7 @@ exe = EXE(
     a.zipfiles,
     a.datas,
     [],
-    name='{}'.format(moduleName),
+    name='{}-{}'.format(moduleName, version.describe()),
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
@@ -61,6 +69,12 @@ exe = EXE(
     icon=join(sourcePath, 'team210.ico'),
 )
 
-exeFileName = '{}{}'.format(moduleName, '.exe' if system() == 'Windows' else '')
-zipFileName = '{}-{}.zip'.format(moduleName, 'windows' if system() == 'Windows' else 'linux')
-ZipFile(join(distPath, zipFileName), mode='w').write(join(distPath, exeFileName), arcname=exeFileName)
+exeFileName = '{}-{}{}'.format(moduleName, version.describe(), '.exe' if system() == 'Windows' else '')
+zipFileName = '{}-{}-{}.zip'.format(moduleName, version.describe(), 'windows' if system() == 'Windows' else 'linux')
+
+zipfile = ZipFile(distPath / zipFileName, mode='w')
+zipfile.write(distPath / exeFileName, arcname=exeFileName)
+zipfile.write(rootPath / 'README.md', arcname='README.md')
+zipfile.write(rootPath / 'LICENSE', arcname='LICENSE')
+zipfile.write(rootPath / 'screenshot.png', arcname='screenshot.png')
+zipfile.close()
