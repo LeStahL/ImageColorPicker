@@ -17,6 +17,16 @@ from Pylette import extract_colors
 from tempfile import TemporaryDirectory
 from pathlib import Path
 import rtoml
+from enum import (
+    IntEnum,
+    auto,
+)
+
+
+class CoordinateType(IntEnum):
+    AspectCorrectedBottomUp = auto()
+    NormalizedBottomUp = auto()
+    NormalizedTopDown = auto()
 
 
 class MainWindow(QMainWindow):
@@ -33,8 +43,14 @@ class MainWindow(QMainWindow):
         loadUi(join(dirname(__file__), MainWindow.UIFile), self)
         self.setWindowIcon(QIcon(join(dirname(__file__), MainWindow.IconFile)))
 
+        self.toolBar: QToolBar
+        self.coordinateDropdown = QComboBox(self)
+        for coordinateType in CoordinateType:
+            self.coordinateDropdown.addItem(coordinateType.name, coordinateType)
+        self.toolBar.addWidget(self.coordinateDropdown)
+
         self.picker: PickableColorLabel
-        self.picker.hovered.connect(lambda cursor: self.statusBar().showMessage('Position: x = {}, y = {}'.format(cursor.x(), cursor.y())))
+        self.picker.hovered.connect(lambda cursor: self.statusBar().showMessage('Position: x = {}, y = {}'.format(*self._coordinates(cursor.x(), cursor.y()))))
         self.picker.picked.connect(self._updatePickInformation)
         self.actionOpen.triggered.connect(self.open)
         self.actionQuit.triggered.connect(self.quit)
@@ -46,7 +62,6 @@ class MainWindow(QMainWindow):
         self.gradientEditor: GradientEditor
         self.gradientEditor.doubleClicked.connect(self.updateGradientViewWithColor)
 
-        self.toolBar: QToolBar
         self.degreeLabel = QLabel(self.toolBar)
         self.degreeLabel.setText("Degree: ")
         self.toolBar.addWidget(self.degreeLabel)
@@ -122,6 +137,18 @@ class MainWindow(QMainWindow):
         self.actionExtract_Palette: QAction
         self.actionExtract_Palette.triggered.connect(self.extractPalette)
 
+        self.coordinateLabel = QLabel(self)
+        self.coordinateLabel.setText("Coordinates: ")
+        self.toolBar.addWidget(self.coordinateLabel)
+
+        self.actionForce_16_9_View: QAction
+        self.actionForce_16_9_View.triggered.connect(self._force16_9View)
+
+    def _force16_9View(self: Self) -> None:
+        w = self.picker.width()
+        h = int(9. / 16. * w)
+        self.picker.resize(w, h)
+
     def extractPalette(self: Self) -> None:
         with TemporaryDirectory() as directory:
             imagePath: Path = Path(directory) / 'image.jpg'
@@ -146,6 +173,15 @@ class MainWindow(QMainWindow):
                 self.gradientEditor._allColorMaps = index.model()._allColorMaps
                 self.gradientEditor.gradientPreview.changeColorMaps(index.model()._allColorMaps)
 
+    def _coordinates(self: Self, qtX: float, qtY: float) -> tuple[float, float]:
+        if self.coordinateDropdown.currentData() == CoordinateType.NormalizedTopDown:
+            return qtX, qtY
+        qtY = 1. - qtY
+        if self.coordinateDropdown.currentData() == CoordinateType.NormalizedBottomUp:
+            return qtX, qtY
+        width: int = self.picker.rect().width()
+        height: int = self.picker.rect().height()
+        return (qtX - .5) * width / height, (qtY - .5) * height / height
 
     def degreeChanged(self: Self, value: int) -> None:
         ColorGradient.Degree = value
