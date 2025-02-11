@@ -44,6 +44,11 @@ class MainWindow(QMainWindow):
         self.setWindowIcon(QIcon(join(dirname(__file__), MainWindow.IconFile)))
 
         self.toolBar: QToolBar
+
+        self.coordinateLabel = QLabel(self)
+        self.coordinateLabel.setText("Coordinates: ")
+        self.toolBar.addWidget(self.coordinateLabel)
+
         self.coordinateDropdown = QComboBox(self)
         for coordinateType in CoordinateType:
             self.coordinateDropdown.addItem(coordinateType.name, coordinateType)
@@ -136,10 +141,6 @@ class MainWindow(QMainWindow):
 
         self.actionExtract_Palette: QAction
         self.actionExtract_Palette.triggered.connect(self.extractPalette)
-
-        self.coordinateLabel = QLabel(self)
-        self.coordinateLabel.setText("Coordinates: ")
-        self.toolBar.addWidget(self.coordinateLabel)
 
         self.actionForce_16_9_View: QAction
         self.actionForce_16_9_View.triggered.connect(self._force16_9View)
