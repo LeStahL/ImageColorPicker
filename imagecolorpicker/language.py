@@ -6,3 +6,4 @@ class Language(IntEnum):
     HLSL = auto()
     CSS = auto()
     SVG = auto()
+    PythonBytes = auto()

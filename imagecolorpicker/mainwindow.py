@@ -283,6 +283,9 @@ class MainWindow(QMainWindow):
                 clipboard.setText(self.gradientEditor._gradient.buildSVGGradient(self.weightDropDown.currentData(), self.mixDropDown.currentData()))
             elif currentRepresentation == Representation.Picked3ComponentColor:
                 clipboard.setText(self.picker._color.name())
+        elif currentLanguage == Language.PythonBytes:
+            if currentRepresentation == Representation.ColorMap:
+                clipboard.setText(self.gradientEditor._gradient.buildPythonBinary(self.weightDropDown.currentData(), self.mixDropDown.currentData()))
 
     def paste(self: Self) -> None:
         clipboard = QGuiApplication.clipboard()

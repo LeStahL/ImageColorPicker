@@ -28,6 +28,11 @@ from imagecolorpicker.color import (
 )
 from functools import partial
 from PyQt6.QtGui import QColor
+from construct import (
+    Float16l,
+    Float16b,
+    Array,
+)
 
 class GradientWeight(IntEnum):
     Oklab = 0x2
@@ -237,6 +242,41 @@ class ColorGradient:
         weight=weight.name,
         slug=slug,
     )
+
+    def buildPythonBinary(
+        self: Self,
+        weight: GradientWeight = GradientWeight.Oklab,
+        mix: GradientMix = GradientMix.Oklab,
+        slug: str = '_example',
+    ) -> str:
+        result: List[vec3] = self.fit(weight=weight, mix=mix)
+        print(result)
+        zwischenresult = b''.join(map(
+            lambda resultIndex: b''.join(list(map(
+                lambda resultComponent: Float16l.build(resultComponent),
+                result[resultIndex],
+            ))),
+            range(len(result)),
+        ))
+        print(len(zwischenresult), zwischenresult)
+        print(Array(21, Float16l).parse(zwischenresult))
+        moreresult = f"# Color map coefficients for {slug}\n" + str(zwischenresult)
+        return moreresult
+    
+    def buildNasmBinary(
+        self: Self,
+        weight: GradientWeight = GradientWeight.Oklab,
+        mix: GradientMix = GradientMix.Oklab,
+        slug: str = '_example',
+    ) -> str:
+        result: List[vec3] = self.fit(weight=weight, mix=mix)
+        return f"; Color map coefficients for {slug}\n" + str(b''.join(map(
+            lambda resultIndex: b''.join(reversed(list(map(
+                lambda resultComponent: Float16l.build(resultComponent),
+                result[resultIndex],
+            )))),
+            range(len(result)),
+        ))) + ","
 
     @staticmethod
     def evaluateFit(t: float, fit: List[vec3]) -> vec3:

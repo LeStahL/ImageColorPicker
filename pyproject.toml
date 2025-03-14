@@ -20,6 +20,7 @@ parse = "^1.19.1"
 pip = "^24.0"
 pylette = "^2.3.0"
 rtoml = "^0.11.0"
+construct = "^2.10.70"
 
 [tool.poetry.group.dev.dependencies]
 pyinstaller = "^6.0.0"
