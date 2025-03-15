@@ -46,13 +46,22 @@ class GradientMix(IntEnum):
     RGB = 0x0
 
 class ColorGradient:
-    Degree = 6
-
     def __init__(
         self: Self,
+        name: str,
+        degree: int,
+        defaultWeight: GradientWeight,
+        defaultMix: GradientMix,
         *args: Tuple[Color],
     ) -> None:
+        self._name: str = name
+        self._degree: int = degree
         self._colors: List[Color] = deepcopy([*args])
+        self._defaultWeight: GradientWeight = defaultWeight
+        self._defaultMix: GradientMix = defaultMix
+
+    def toDict(self: Self) -> None:
+        return {}
 
     def determineWeights(
         self: Self,
@@ -177,7 +186,7 @@ class ColorGradient:
             t,
         ))
 
-        model = PolynomialModel(degree=ColorGradient.Degree)
+        model = PolynomialModel(degree=self._degree)
         
         # Fit red
         r = array(list(map(

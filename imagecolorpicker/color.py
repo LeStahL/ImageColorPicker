@@ -17,7 +17,7 @@ from typing import (
 from enum import IntEnum
 from copy import deepcopy
 
-class ColorSpace(IntEnum):
+class ColorSpaceType(IntEnum):
     RGB = 0x0
     XYZ_SRGB = 0x1
     OKLAB = 0x2
@@ -25,6 +25,46 @@ class ColorSpace(IntEnum):
     CIEXYZ = 0x4
     CIELAB = 0x5
     CIELCH = 0x6
+
+class ColorSpace:
+    SRGBAlpha: float = 0.055
+
+    def __init__(self: Self):
+        pass
+
+    @staticmethod
+    def linearToSRGB(component: float) -> float:
+        if component <= 0.0031308:
+            return 12.92 * component
+        return (1.0 + ColorSpace.SRGBAlpha) * pow(
+            component,
+            1. / 2.4,
+        ) - ColorSpace.SRGBAlpha
+
+    @staticmethod
+    def RGBToSRGB(rgb: vec3) -> vec3:
+        return vec3(
+            ColorSpace.linearToSRGB(rgb.r),
+            ColorSpace.linearToSRGB(rgb.g),
+            ColorSpace.linearToSRGB(rgb.b),
+        )
+    
+    @staticmethod
+    def SRGBToLinear(component: float) -> float:
+       if component <= 0.04045:
+           return component / 12.92
+       return pow(
+           (component + ColorSpace.SRGBAlpha) / (1.0 + ColorSpace.SRGBAlpha),
+           2.4,
+        )
+    
+    @staticmethod
+    def SRGBToRGB(srgb: vec3) -> vec3:
+        return vec3(
+            ColorSpace.SRGBToLinear(srgb.r),
+            ColorSpace.SRGBToLinear(srgb.g),
+            ColorSpace.SRGBToLinear(srgb.b),
+        )
 
 class Color:
     Msrgb: mat3 = mat3(

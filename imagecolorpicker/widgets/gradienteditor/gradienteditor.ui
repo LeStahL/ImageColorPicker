@@ -42,7 +42,7 @@
       </layout>
      </item>
      <item>
-      <widget class="GradientPreview" name="gradientPreview">
+      <widget class="QOpenGLWidget" name="gradientPreview">
        <property name="sizePolicy">
         <sizepolicy hsizetype="MinimumExpanding" vsizetype="Preferred">
          <horstretch>0</horstretch>
@@ -74,13 +74,6 @@
    </item>
   </layout>
  </widget>
- <customwidgets>
-  <customwidget>
-   <class>GradientPreview</class>
-   <extends>QOpenGLWidget</extends>
-   <header>imagecolorpicker.gradientpreview</header>
-  </customwidget>
- </customwidgets>
  <resources/>
  <connections/>
 </ui>

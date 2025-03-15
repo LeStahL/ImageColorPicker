@@ -143,11 +143,7 @@
     <number>1</number>
    </attribute>
    <widget class="QWidget" name="dockWidgetContents_2">
-    <layout class="QVBoxLayout" name="verticalLayout_3">
-     <item>
-      <widget class="GradientEditor" name="gradientEditor" native="true"/>
-     </item>
-    </layout>
+    <layout class="QVBoxLayout" name="verticalLayout_3"/>
    </widget>
   </widget>
   <widget class="QToolBar" name="toolBar">
@@ -235,11 +231,6 @@
   </action>
  </widget>
  <customwidgets>
-  <customwidget>
-   <class>GradientEditor</class>
-   <extends>QWidget</extends>
-   <header>imagecolorpicker.gradienteditor</header>
-  </customwidget>
   <customwidget>
    <class>PickableColorLabel</class>
    <extends>QWidget</extends>
