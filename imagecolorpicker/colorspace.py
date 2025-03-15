@@ -28,6 +28,9 @@ class ColorSpaceType(IntEnum):
     CIELCH = 0x6
 
 class ColorSpace:
+    
+
+
     # sRGB constants
     SRGBAlpha: float = 0.055
 
