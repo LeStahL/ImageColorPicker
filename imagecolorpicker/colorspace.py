@@ -2,6 +2,7 @@ from glm import (
     mat3,
     vec3,
     vec2,
+    vec4,
     inverse,
     pow,
     length,
@@ -10,26 +11,122 @@ from glm import (
     cos,
     mix,
     sqrt,
+    fract,
+    clamp,
+    dot,
 )
 from typing import (
     Self,
     List,
+    Callable,
 )
-from enum import IntEnum
+from enum import (
+    IntEnum,
+    IntFlag,
+    auto,
+)
 from copy import deepcopy
+from networkx import (
+    DiGraph,
+    shortest_path,
+    draw,
+    spring_layout,
+)
 
 class ColorSpaceType(IntEnum):
-    RGB = 0x0
-    XYZ_SRGB = 0x1
-    OKLAB = 0x2
-    OKLCH = 0x3
-    CIEXYZ = 0x4
-    CIELAB = 0x5
-    CIELCH = 0x6
+    SRGB = 0x0
+    RGB = 0x1
+    CIEXYZ = 0x2
+    CIELAB = 0x3
+    CIELCH = 0x4
+    OKLAB = 0x5
+    OKLCH = 0x6
+    HunterLAB = 0x7
+    HunterLCH = 0x8
+    HSL = 0x9
+    YCbCr = 0xA
+    CIE1931Yxy = 0xB
+    HSV = 0xC
+
+class ColorSpaceParameterType(IntFlag):
+    NoParameters = 0x0
+    Illuminant = auto()
+    Observer = auto()
+
+class Observer(IntEnum):
+    TwoDegreesCIE1931 = auto()
+    TenDegreesCIE1964 = auto()
+
+class Illuminant(IntEnum):
+    A = auto()
+    B = auto()
+    C = auto()
+    D50 = auto()
+    D55 = auto()
+    D65 = auto()
+    D75 = auto()
+    E = auto()
+    F1 = auto()
+    F2 = auto()
+    F3 = auto()
+    F4 = auto()
+    F5 = auto()
+    F6 = auto()
+    F7 = auto()
+    F8 = auto()
+    F9 = auto()
+    F10 = auto()
+    F11 = auto()
+    F12 = auto()
 
 class ColorSpace:
-    
-
+    # Tristimuli
+    Tristimuli: dict[Observer, dict[Illuminant, vec3]] = {
+        Observer.TwoDegreesCIE1931: {
+            Illuminant.A: vec3(109.850, 100.000, 35.585),
+            Illuminant.B: vec3(99.0927, 100.000, 85.313),
+            Illuminant.C: vec3(98.074, 100.000, 118.232),
+            Illuminant.D50: vec3(96.422, 100.000, 82.521),
+            Illuminant.D55: vec3(95.682, 100.000, 92.149),
+            Illuminant.D65: vec3(95.047, 100.000, 108.883),
+            Illuminant.D75: vec3(94.972, 100.000, 122.638),
+            Illuminant.E: vec3(100.000, 100.000, 100.000),
+            Illuminant.F1: vec3(92.834, 100.000, 103.665),
+            Illuminant.F2: vec3(99.187, 100.000, 67.395),
+            Illuminant.F3: vec3(103.754, 100.000, 49.861),
+            Illuminant.F4: vec3(109.147, 100.000, 38.813),
+            Illuminant.F5: vec3(90.872, 100.000, 98.723),
+            Illuminant.F6: vec3(97.309, 100.000, 60.191),
+            Illuminant.F7: vec3(95.044, 100.000, 108.755),
+            Illuminant.F8: vec3(96.413, 100.000, 82.333),
+            Illuminant.F9: vec3(100.365, 100.000, 67.868),
+            Illuminant.F10: vec3(96.174, 100.000, 81.712),
+            Illuminant.F11: vec3(100.966, 100.000, 64.370),
+            Illuminant.F12: vec3(108.046, 100.000, 39.228),
+        },
+        Observer.TenDegreesCIE1964: {
+            Illuminant.A: vec3(111.144, 100.000, 35.200),
+            Illuminant.B: vec3(99.178, 100.000, 84.3493),
+            Illuminant.C: vec3(97.285, 100.000, 116.145),
+            Illuminant.D50: vec3(96.720, 100.000, 81.427),
+            Illuminant.D55: vec3(95.799, 100.000, 90.926),
+            Illuminant.D65: vec3(94.811, 100.000, 107.304),
+            Illuminant.D75: vec3(94.416, 100.000, 120.641),
+            Illuminant.E: vec3(100.000, 100.000, 100.000),
+            Illuminant.F1: vec3(94.791, 100.000, 103.191),
+            Illuminant.F2: vec3(103.280, 100.000, 69.026),
+            Illuminant.F3: vec3(108.968, 100.000, 51.965),
+            Illuminant.F4: vec3(114.961, 100.000, 40.963),
+            Illuminant.F5: vec3(93.369, 100.000, 98.636),
+            Illuminant.F6: vec3(102.148, 100.000, 62.074),
+            Illuminant.F7: vec3(95.792, 100.000, 107.687),
+            Illuminant.F8: vec3(97.115, 100.000, 81.135),
+            Illuminant.F9: vec3(102.116, 100.000, 67.826),
+            Illuminant.F10: vec3(99.001, 100.000, 83.134),
+            Illuminant.F11: vec3(103.866, 100.000, 65.627),
+            Illuminant.F12: vec3(111.428, 100.000, 40.353),
+        },
+    }
 
     # sRGB constants
     SRGBAlpha: float = 0.055
@@ -41,9 +138,9 @@ class ColorSpace:
         0.1804375, 0.0721750, 0.9503041
     )
     MRGBCIEXYZInv: mat3 = inverse(MRGBCIEXYZ)
-    CIEXYZ_D65: vec3 = vec3(95.0489, 100.0, 108.8840)
-    CIEXYZ_D50: vec3 = vec3(96.4212, 100.0, 82.5188)
-    CIEXYZ_ICC: vec3 = vec3(96.42, 100.0, 82.4)
+    # CIEXYZ_D65: vec3 = vec3(95.0489, 100.0, 108.8840)
+    # CIEXYZ_D50: vec3 = vec3(96.4212, 100.0, 82.5188)
+    # CIEXYZ_ICC: vec3 = vec3(96.42, 100.0, 82.4)
     CIEDelta = 6.0 / 29.0
 
     # OKLAB constants
@@ -138,30 +235,6 @@ class ColorSpace:
             ColorSpace.ginv(l16 - cielab.z),
         )
 
-    # @staticmethod
-    # def CIEXYZToCIELABD50(ciexyz: vec3) -> vec3:
-    #     return ColorSpace.CIEXYZToCIELAB(ciexyz, ColorSpace.CIEXYZ_D50)
-    
-    # @staticmethod
-    # def CIELABD50ToCIEXYZ(cielab: vec3) -> vec3:
-    #     return ColorSpace.CIELABToCIEXYZ(cielab, ColorSpace.CIEXYZ_D50)
-
-    # @staticmethod
-    # def CIEXYZToCIELABD65(ciexyz: vec3) -> vec3:
-    #     return ColorSpace.CIEXYZToCIELAB(ciexyz, ColorSpace.CIEXYZ_D65)
-
-    # @staticmethod
-    # def CIELABD65ToCIEXYZ(cielab: vec3) -> vec3:
-    #     return ColorSpace.CIELABToCIEXYZ(cielab, ColorSpace.CIEXYZ_D65)
-    
-    # @staticmethod
-    # def CIEXYZToCIELABICC(ciexyz: vec3) -> vec3:
-    #     return ColorSpace.CIEXYZToCIELAB(ciexyz, ColorSpace.CIEXYZ_ICC)
-
-    # @staticmethod
-    # def CIELABICCToCIEXYZ(cielab: vec3) -> vec3:
-    #     return ColorSpace.CIELABToCIEXYZ(cielab, ColorSpace.CIEXYZ_ICC)
-
     @staticmethod
     def CartesianToPolar(lab: vec3) -> vec3:
         return vec3(
@@ -178,14 +251,6 @@ class ColorSpace:
             lch.y * sin(lch.z),
         )
 
-    # @staticmethod
-    # def CIELABToCIELCH(cielab: vec3) -> vec3:
-    #     return ColorSpace.CartesianToPolar(cielab)
-    
-    # @staticmethod
-    # def CIELCHToCIELAB(cielch: vec3) -> vec3:
-    #     return ColorSpace.PolarToCartesian(cielch)
-    
     @staticmethod
     def CIEXYZToOKLAB(ciexyz: vec3) -> vec3:
         return ColorSpace.OKLABM2 * pow(ColorSpace.OKLABM1 * ciexyz, vec3(3.0))
@@ -193,14 +258,6 @@ class ColorSpace:
     @staticmethod
     def OKLABToCIEXYZ(oklab: vec3) -> vec3:
         return ColorSpace.OKLABM1Inv * pow(ColorSpace.OKLABM2Inv * oklab, vec3(3.0))
-
-    # @staticmethod
-    # def OKLABToOKLCH(oklab: vec3) -> vec3:
-    #     return ColorSpace.CartesianToPolar(oklab)
-    
-    # @staticmethod
-    # def OKLCHToOKLAB(oklch: vec3) -> vec3:
-    #     return ColorSpace.PolarToCartesian(oklch)
 
     @staticmethod
     def CIEXYZToHunterLAB(ciexyz: vec3, whitepoint: vec3) -> vec3:
@@ -220,4 +277,227 @@ class ColorSpace:
             sk,
             -(hunterlab.z / 70.0 * 218.11 * (whitepoint.y + whitepoint.z) * sqrt(sk / whitepoint.y) - sk / whitepoint.y) * whitepoint.z,
         )
+    
+    # RGB to HSL (hue, saturation, lightness/luminance).
+    # Based on: https://gist.github.com/yiwenl/745bfea7f04c456e0101
+    @staticmethod
+    def RGBToHSL(rgb: vec3) -> vec3:
+        cMin: float = min(
+            min(
+                rgb.r,
+                rgb.g,
+            ),
+            rgb.b,
+        )
+        cMax: float = max(
+            max(
+                rgb.r,
+                rgb.g,
+            ),
+            rgb.b,
+        )
+        delta: float = cMax - cMin
+        hsl: vec3 = vec3(0.0, 0.0, (cMax + cMin) / 2.)
+        if delta != 0.0:
+            if hsl.z < 0.5:
+                hsl.y = delta / (cMax + cMin)
+            else:
+                hsl.y = delta / (2.0 - cMax - cMin)
+            deltaR: float = (cMax - rgb.r) / 6.0 / delta + 0.5
+            deltaG: float = (cMax - rgb.g) / 6.0 / delta + 0.5
+            deltaB: float = (cMax - rgb.b) / 6.0 / delta + 0.5
+            if rgb.r == cMax:
+                hsl.x = deltaB - deltaG
+            elif rgb.g == cMax:
+                hsl.x = 1.0 / 3.0 + deltaR - deltaB
+            else:
+                hsl.x = 2.0 / 3.0 + deltaG - deltaR
+            hsl.x = fract(hsl.x)
+        return hsl
 
+
+    @staticmethod
+    def HSLToRGB(hsl: vec3) -> vec3:
+        if hsl.y == 0.0:
+            return vec3(hsl.z)
+        b: float
+        if hsl.z < 0.5:
+            b = hsl.z * (1.0 + hsl.y)
+        else:
+            b = hsl.z + hsl.y - hsl.y * hsl.z
+        a: float = 2.0 * hsl.z - b
+        hue: float = fract(hsl.x)
+        rgb: float = clamp(
+            vec3(
+                abs(hue * 6.0 - 3.0) - 1.0,
+                2.0 - abs(hue * 6.0 - 2.0),
+                2.0 - abs(hue * 6.0 - 4.0)
+            ),
+            0.0,
+            1.0
+        )
+        return a + rgb * (b - a)
+
+    # RGB to YCbCr, ranges [0, 1].
+    # Based on: https://github.com/tobspr/GLSL-Color-Spaces/blob/master/ColorSpaces.inc.glsl
+    @staticmethod
+    def RGBToYCbCr(rgb: vec3) -> vec3:
+        y: float = dot(vec3(0.299, 0.587, 0.114), rgb)
+        return vec3(
+            y,
+            (rgb.b - y) * 0.565,
+            (rgb.r - y) * 0.713,
+        )
+
+    # YCbCr to RGB.
+    @staticmethod
+    def YCbCrToRGB(yuv: vec3) -> vec3:
+        return vec3(
+            yuv.x + 1.403 * yuv.z,
+            yuv.x - 0.344 * yuv.y - 0.714 * yuv.z,
+            yuv.x + 1.770 * yuv.y
+        )
+
+    # XYZ to CIE 1931 Yxy color space (luma (Y) along with x and y chromaticity), I found that Photoshop used this.
+    @staticmethod
+    def CIEXYZToCIE1931Yxy(xyz: vec3) -> vec3:
+        s: float = xyz.x + xyz.y + xyz.z
+        return vec3(
+            xyz.y,
+            xyz.x / s,
+            xyz.y / s,
+        )
+
+    @staticmethod
+    def CIE1931YxyToCIEXYZ(yxy: vec3) -> vec3:
+        x: float = yxy.x * (yxy.y / yxy.z)
+        return vec3(
+            x,
+            yxy.x,
+            x / yxy.y - x - yxy.x,
+        )
+    
+    # HSV (hue, saturation, value) to RGB.
+    # Sources: https://gist.github.com/yiwenl/745bfea7f04c456e0101, https://gist.github.com/sugi-cho/6a01cae436acddd72bdf
+    # Changed saturate to clamp, ported to Python.
+    @staticmethod
+    def HSVToRGB(hsv: vec3) -> vec3:
+        K: vec4 = vec4(1.0, 2.0 / 3.0, 1.0 / 3.0, 3.0)
+        return hsv.z * mix(
+            K.xxx,
+            clamp(
+                abs(fract(hsv.x + K.xyz) * 6.0 - K.w) - K.x,
+                0.0,
+                1.0,
+            ),
+            hsv.y,
+        )
+
+    # RGB to HSV.
+    # Source: https://gist.github.com/yiwenl/745bfea7f04c456e0101
+    # Ported to Python.
+    @staticmethod
+    def RGBToHSV(rgb: vec3) -> vec3:
+        cMax: float = max(
+            max(
+                rgb.r,
+                rgb.g,
+            ),
+            rgb.b,
+        )
+        cMin: float = min(
+            min(
+                rgb.r,
+                rgb.g,
+            ),
+            rgb.b,
+        )
+        delta: float = cMax - cMin
+        hsv: vec3 = vec3(0.0, 0.0, cMax)
+        if cMax > cMin:
+            hsv.y = delta / cMax
+            if rgb.r == cMax:
+                hsv.x = (rgb.g - rgb.b) / delta
+            elif rgb.g == cMax:
+                hsv.x = 2.0 + (rgb.b - rgb.r) / delta
+            else:
+                hsv.x = 4.0 + (rgb.r - rgb.g) / delta
+            hsv.x = fract(hsv.x / 6.0)
+        return hsv
+
+    Edges: dict[tuple[ColorSpaceType, ColorSpaceType], tuple[Callable[[vec3, list[float]], vec3], ColorSpaceParameterType]] = {
+        (ColorSpaceType.SRGB, ColorSpaceType.RGB): (SRGBToRGB, ColorSpaceParameterType.NoParameters),
+        (ColorSpaceType.RGB, ColorSpaceType.SRGB): (RGBToSRGB, ColorSpaceParameterType.NoParameters),
+        (ColorSpaceType.RGB, ColorSpaceType.CIEXYZ): (RGBToCIEXYZ, ColorSpaceParameterType.NoParameters),
+        (ColorSpaceType.CIEXYZ, ColorSpaceType.RGB): (CIEXYZToRGB, ColorSpaceParameterType.NoParameters),
+        (ColorSpaceType.CIEXYZ, ColorSpaceType.CIELAB): (CIEXYZToCIELAB, ColorSpaceParameterType.Illuminant | ColorSpaceParameterType.Observer),
+        (ColorSpaceType.CIELAB, ColorSpaceType.CIEXYZ): (CIELABToCIEXYZ, ColorSpaceParameterType.Illuminant | ColorSpaceParameterType.Observer),
+        (ColorSpaceType.CIELAB, ColorSpaceType.CIELCH): (CartesianToPolar, ColorSpaceParameterType.NoParameters),
+        (ColorSpaceType.CIELCH, ColorSpaceType.CIELAB): (PolarToCartesian, ColorSpaceParameterType.NoParameters),
+        (ColorSpaceType.CIEXYZ, ColorSpaceType.OKLAB): (CIEXYZToOKLAB, ColorSpaceParameterType.NoParameters),
+        (ColorSpaceType.OKLAB, ColorSpaceType.CIEXYZ): (OKLABToCIEXYZ, ColorSpaceParameterType.NoParameters),
+        (ColorSpaceType.OKLAB, ColorSpaceType.OKLCH): (CartesianToPolar, ColorSpaceParameterType.NoParameters),
+        (ColorSpaceType.OKLCH, ColorSpaceType.OKLAB): (PolarToCartesian, ColorSpaceParameterType.NoParameters),
+        (ColorSpaceType.CIEXYZ, ColorSpaceType.HunterLAB): (CIEXYZToHunterLAB, ColorSpaceParameterType.Illuminant | ColorSpaceParameterType.Observer),
+        (ColorSpaceType.HunterLAB, ColorSpaceType.CIEXYZ): (HunterLABToCIEXYZ, ColorSpaceParameterType.Illuminant | ColorSpaceParameterType.Observer),
+        (ColorSpaceType.HunterLAB, ColorSpaceType.HunterLCH): (CartesianToPolar, ColorSpaceParameterType.NoParameters),
+        (ColorSpaceType.HunterLCH, ColorSpaceType.HunterLAB): (PolarToCartesian, ColorSpaceParameterType.NoParameters),
+        (ColorSpaceType.RGB, ColorSpaceType.HSL): (RGBToHSL, ColorSpaceParameterType.NoParameters),
+        (ColorSpaceType.HSL, ColorSpaceType.RGB): (HSLToRGB, ColorSpaceParameterType.NoParameters),
+        (ColorSpaceType.CIEXYZ, ColorSpaceType.CIE1931Yxy): (CIEXYZToCIE1931Yxy, ColorSpaceParameterType.NoParameters),
+        (ColorSpaceType.CIE1931Yxy, ColorSpaceType.CIEXYZ): (CIE1931YxyToCIEXYZ, ColorSpaceParameterType.NoParameters),
+        (ColorSpaceType.RGB, ColorSpaceType.YCbCr): (RGBToYCbCr, ColorSpaceParameterType.NoParameters),
+        (ColorSpaceType.YCbCr, ColorSpaceType.RGB): (YCbCrToRGB, ColorSpaceParameterType.NoParameters),
+        (ColorSpaceType.RGB, ColorSpaceType.HSV): (RGBToHSV, ColorSpaceParameterType.NoParameters),
+        (ColorSpaceType.HSV, ColorSpaceType.RGB): (HSVToRGB, ColorSpaceParameterType.NoParameters),
+    }
+
+    Graph: DiGraph = DiGraph(Edges.keys())
+
+    @staticmethod
+    def convert(
+        color: vec3,
+        fromColorSpace: ColorSpaceType,
+        toColorSpace: ColorSpaceType,
+        **kwargs,
+    ) -> vec3:
+        print(f"Finding shortest path from {fromColorSpace.name} to {toColorSpace.name} with dijkstra.") 
+        path = shortest_path(ColorSpace.Graph, fromColorSpace, toColorSpace)
+        result: vec3 = color
+        for nodeIndex in range(len(path) - 1):
+            edge = path[nodeIndex], path[nodeIndex + 1]
+            transform, parameterTypes = ColorSpace.Edges[edge]
+            parameters = []
+            if ColorSpaceParameterType.Illuminant in parameterTypes and \
+                ColorSpaceParameterType.Observer in parameterTypes:
+                parameters.append(ColorSpace.Tristimuli[kwargs['observer']][kwargs['illuminant']])
+            print("Applying", transform)
+            result = transform(result, *parameters)
+        return result
+
+if __name__ == '__main__':
+    # print("test")
+    from matplotlib import pyplot
+    labeldict = {}
+    for colorSpaceType in ColorSpaceType:
+        labeldict[colorSpaceType] = colorSpaceType.name
+    draw(ColorSpace.Graph, with_labels=True, labels=labeldict)
+    pyplot.draw()
+    pyplot.show()
+
+    result = ColorSpace.convert(
+        vec3(.3, .5, .8),
+        ColorSpaceType.SRGB,
+        ColorSpaceType.CIEXYZ,
+        # observer=Observer.TenDegreesCIE1964,
+        # illuminant=Illuminant.D75,
+    )
+    print("result:", result)
+    original = ColorSpace.convert(
+        result,
+        ColorSpaceType.CIEXYZ,
+        ColorSpaceType.RGB,
+        # observer=Observer.TenDegreesCIE1964,
+        # illuminant=Illuminant.D75,
+    )
+    print("original:", original)
