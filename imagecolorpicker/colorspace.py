@@ -47,6 +47,8 @@ class ColorSpaceType(IntEnum):
     YCbCr = 0xA
     CIE1931Yxy = 0xB
     HSV = 0xC
+    CIELuv = 0xD
+    AdobeRGB = 0xE
 
 class ColorSpaceParameterType(IntFlag):
     NoParameters = 0x0
@@ -425,6 +427,87 @@ class ColorSpace:
             hsv.x = fract(hsv.x / 6.0)
         return hsv
 
+    # Adapted from: https://www.easyrgb.com/en/math.php
+    @staticmethod
+    def CIEXYZToCIELuv(xyz: vec3, illuminant: vec3) -> vec3:
+        var_U = 4.0 * xyz.x / (xyz.x + 15.0 * xyz.y + 3.0 * xyz.z)
+        var_V = 9.0 * xyz.y / (xyz.x + 15.0 * xyz.y + 3.0 * xyz.z)
+
+        var_Y = xyz.y / 100.0
+        if var_Y > 0.008856:
+            var_Y = pow(var_Y, 1.0 / 3.0)
+        else:
+            var_Y = 7.787 * var_Y + 16.0 / 116.0
+
+        ref_U = 4.0 * illuminant.x / (illuminant.x + 15.0 * illuminant.y + 3.0 * illuminant.z)
+        ref_V = 9.0 * illuminant.y / (illuminant.x + 15.0 * illuminant.y + 3.0 * illuminant.z)
+
+        s = 116.0 * var_Y - 16.0
+        return vec3(
+            s,
+            13.0 * s * (var_U - ref_U),
+            13.0 * s * (var_V - ref_V),
+        )
+    
+    @staticmethod
+    def CIELuvToCIEXYZ(luv: vec3, illuminant: vec3) -> vec3:
+        var_Y = (luv.x + 16.0) / 116.0
+        if pow(var_Y, 3.0) > 0.008856:
+            var_Y = pow(var_Y, 3.0)
+        else:
+            var_Y = (var_Y - 16.0 / 116.0) / 7.787
+
+        ref_U = 4.0 * illuminant.x / (illuminant.x + 15.0 * illuminant.y + 3.0 * illuminant.z)
+        ref_V = 9.0 * illuminant.y / (illuminant.x + 15.0 * illuminant.y + 3.0 * illuminant.z)
+
+        var_U = luv.y / 13.0 / luv.x + ref_U
+        var_V = luv.z / 13.0 / luv.x + ref_V
+
+        Y = var_Y * 100
+        X =  - ( 9 * Y * var_U ) / ( ( var_U - 4 ) * var_V - var_U * var_V )
+        Z = ( 9 * Y - ( 15 * var_V * Y ) - ( var_V * X ) ) / ( 3 * var_V )
+        return vec3(X, Y, Z)
+
+    @staticmethod
+    def CIEXYZToAdobeRGB(xyz: vec3) -> vec3:
+        var_X = xyz.x / 100.0
+        var_Y = xyz.y / 100.0
+        var_Z = xyz.z / 100.0
+
+        var_R = var_X *  2.04137 + var_Y * -0.56495 + var_Z * -0.34469
+        var_G = var_X * -0.96927 + var_Y *  1.87601 + var_Z *  0.04156
+        var_B = var_X *  0.01345 + var_Y * -0.11839 + var_Z *  1.01541
+
+        var_R = pow(var_R, 1.0 / 2.19921875)
+        var_G = pow(var_G, 1.0 / 2.19921875)
+        var_B = pow(var_B, 1.0 / 2.19921875)
+
+        aR = var_R * 255
+        aG = var_G * 255
+        aB = var_B * 255
+
+        return vec3(aR, aG, aB)
+
+    @staticmethod
+    def AdobeRGBToCIEXYZ(argb: vec3) -> vec3:
+        var_R = argb.x / 255.0
+        var_G = argb.y / 255.0
+        var_B = argb.z / 255.0
+
+        var_R = pow(var_R, 2.19921875)
+        var_G = pow(var_G, 2.19921875)
+        var_B = pow(var_B, 2.19921875)
+
+        var_R = var_R * 100.0
+        var_G = var_G * 100.0
+        var_B = var_B * 100.0
+
+        X = var_R * 0.57667 + var_G * 0.18555 + var_B * 0.18819
+        Y = var_R * 0.29738 + var_G * 0.62735 + var_B * 0.07527
+        Z = var_R * 0.02703 + var_G * 0.07069 + var_B * 0.99110
+
+        return vec3(X, Y, Z)
+
     Edges: dict[tuple[ColorSpaceType, ColorSpaceType], tuple[Callable[[vec3, list[float]], vec3], ColorSpaceParameterType]] = {
         (ColorSpaceType.SRGB, ColorSpaceType.RGB): (SRGBToRGB, ColorSpaceParameterType.NoParameters),
         (ColorSpaceType.RGB, ColorSpaceType.SRGB): (RGBToSRGB, ColorSpaceParameterType.NoParameters),
@@ -450,6 +533,10 @@ class ColorSpace:
         (ColorSpaceType.YCbCr, ColorSpaceType.RGB): (YCbCrToRGB, ColorSpaceParameterType.NoParameters),
         (ColorSpaceType.RGB, ColorSpaceType.HSV): (RGBToHSV, ColorSpaceParameterType.NoParameters),
         (ColorSpaceType.HSV, ColorSpaceType.RGB): (HSVToRGB, ColorSpaceParameterType.NoParameters),
+        (ColorSpaceType.CIEXYZ, ColorSpaceType.CIELuv): (CIEXYZToCIELuv, ColorSpaceParameterType.Illuminant | ColorSpaceParameterType.Observer),
+        (ColorSpaceType.CIELuv, ColorSpaceType.CIEXYZ): (CIELuvToCIEXYZ, ColorSpaceParameterType.Illuminant | ColorSpaceParameterType.Observer),
+        (ColorSpaceType.CIEXYZ, ColorSpaceType.AdobeRGB): (CIEXYZToAdobeRGB, ColorSpaceParameterType.NoParameters),
+        (ColorSpaceType.AdobeRGB, ColorSpaceType.CIEXYZ): (AdobeRGBToCIEXYZ, ColorSpaceParameterType.NoParameters),
     }
 
     Graph: DiGraph = DiGraph(Edges.keys())
