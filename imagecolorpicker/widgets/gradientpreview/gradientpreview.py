@@ -6,7 +6,9 @@ from PyQt6.QtOpenGLWidgets import *
 from OpenGL.GL import *
 from sys import argv
 from os.path import dirname
-from imagecolorpicker import DefaultGradient, GradientWeight, GradientMix
+from imagecolorpicker.color import Color, ColorSpaceType
+from imagecolorpicker.colorgradient import DefaultGradient, GradientWeight, GradientMix, ColorGradient
+from imagecolorpicker.widgets.gradientwidget.gradientwidget import GradientWidget
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 from sys import argv
 from glm import vec3
@@ -83,7 +85,31 @@ class GradientPreview(QOpenGLWidget):
 if __name__ == '__main__':
     app = QApplication(argv)
 
-    widget = GradientPreview()
+    widget: QWidget = QWidget()
+    layout = QVBoxLayout()
+    widget.setLayout(layout)
+    print("sfd")
+    for gradientWeight in GradientWeight:
+        for gradientMix in GradientMix:
+            print("lol")
+            gradientWidget = GradientWidget(ColorGradient(
+                "Default Gradient",
+                7,
+                gradientWeight,
+                gradientMix,
+                [
+                    Color(0.15, 0.18, 0.26),
+                    Color(0.51, 0.56, 0.66),
+                    Color(0.78, 0.67, 0.68),
+                    Color(0.96, 0.75, 0.60),
+                    Color(0.97, 0.81, 0.55),
+                    Color(0.97, 0.61, 0.42),
+                    Color(0.91, 0.42, 0.34),
+                    Color(0.58, 0.23, 0.22),
+                ],
+            ))
+            widget.layout().addWidget(gradientWidget)
+    widget.resize(200, 400)
     widget.show()
 
     app.exec()

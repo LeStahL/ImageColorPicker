@@ -4,6 +4,8 @@ from PyQt6.QtGui import (
     QBrush,
     QPen,
     QColor,
+    QFont,
+    QPalette,
 )
 from PyQt6.QtWidgets import (
     QWidget,
@@ -12,6 +14,8 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtCore import (
     QPoint,
     QPointF,
+    QRect,
+    QRectF,
 )
 from typing import (
     Self,
@@ -21,6 +25,7 @@ from imagecolorpicker.colorgradient import (
     ColorGradient,
     GradientWeight,
     GradientMix,
+    DefaultGradient,
 )
 from imagecolorpicker.color import (
     Color,
@@ -30,6 +35,7 @@ from sys import argv
 
 class GradientWidget(QWidget):
     WeightDotSize: int = 4
+    FontSize: int = 9
 
     def __init__(
         self: Self,
@@ -50,46 +56,42 @@ class GradientWidget(QWidget):
 
         brush: QBrush = QBrush(self._gradient.linearGradient(self.width()))
 
+        palette: QPalette = QApplication.palette()
+
         painter.fillRect(self.rect(), brush)
-        painter.setBrush(QColor('#000000'))
+        backgroundColor: QColor = QColor(palette.color(QPalette.ColorGroup.Normal, QPalette.ColorRole.Window))
+        painter.setBrush(backgroundColor)
+        painter.fillRect(QRectF(0., self.height() - 3 * GradientWidget.WeightDotSize - 1., self.width(), 3 * GradientWidget.WeightDotSize + 1.), backgroundColor)
+        painter.setBrush(brush)
 
         pen: QPen = QPen()
-        pen.setColor(QColor('#FFFFFF'))
-        pen.setWidth(2)
+        pen.setColor(QColor(palette.color(QPalette.ColorGroup.Normal, QPalette.ColorRole.WindowText)))
+        # pen.setWidth(2)
         painter.setPen(pen)
 
+        font: QFont = QFont()
+        font.setPointSizeF(GradientWidget.FontSize)
+        painter.setFont(font)
+
         for weight in self._gradient.weights:
+            # painter.drawEllipse(
+            #     QPointF(weight * self.width(), GradientWidget.WeightDotSize),
+            #     GradientWidget.WeightDotSize,
+            #     GradientWidget.WeightDotSize,
+            # )
             painter.drawEllipse(
-                QPointF(weight * self.width(), GradientWidget.WeightDotSize),
-                GradientWidget.WeightDotSize,
-                GradientWidget.WeightDotSize,
-            )
-            painter.drawEllipse(
-                QPointF(weight * self.width(), self.height() - GradientWidget.WeightDotSize),
+                QPointF(weight * self.width(), self.height() - GradientWidget.WeightDotSize - 1),
                 GradientWidget.WeightDotSize,
                 GradientWidget.WeightDotSize,
             )
             painter.drawText(
-                QPointF(weight * self.width() + 2 * GradientWidget.WeightDotSize, self.height()),
+                QPointF(weight * self.width() + 2 * GradientWidget.WeightDotSize, self.height() - 1),
                 f'{weight:.2f}',
             )
         
 
 if __name__ == '__main__':
     app: QApplication = QApplication(argv)
-    gradientWidget: GradientWidget = GradientWidget(ColorGradient(
-        "default gradient",
-        7,
-        GradientWeight.Oklab,
-        GradientMix.Oklab,
-        Color(0.15, 0.18, 0.26),
-        Color(0.51, 0.56, 0.66),
-        Color(0.78, 0.67, 0.68),
-        Color(0.96, 0.75, 0.60),
-        Color(0.97, 0.81, 0.55),
-        Color(0.97, 0.61, 0.42),
-        Color(0.91, 0.42, 0.34),
-        Color(0.58, 0.23, 0.22),
-    ))
+    gradientWidget: GradientWidget = GradientWidget(DefaultGradient)
     gradientWidget.show()
     app.exec()

@@ -55,26 +55,39 @@ class ColorGradient:
         degree: int,
         defaultWeight: GradientWeight,
         defaultMix: GradientMix,
-        *args: Tuple[Color],
+        colors: list[Color],
     ) -> None:
         self._name: str = name
         self._degree: int = degree
-        self._colors: List[Color] = deepcopy([*args])
+        self._colors: list[Color] = deepcopy(colors)
         # self._weightColorSpace: ColorSpaceType
         # self._mixColorSpace: ColorSpaceType
 
         self._defaultWeight: GradientWeight = defaultWeight
         self._defaultMix: GradientMix = defaultMix
 
-        self._weights: list[float] = [0.] * len(self._colors)
+        self._weights: list[float] = [0.] * self.colorCount
+        self._coefficients: list[vec3] = [vec3(0)] * self.colorCount
         self._update()
+
+    @property
+    def colorCount(self: Self) -> int:
+        return len(self._colors)
 
     @property
     def weights(self: Self) -> list[float]:
         return self._weights
 
+    @property
+    def coefficients(self: Self) -> list[vec3]:
+        return self._coefficients
+
     def _update(self: Self) -> None:
         self._weights = self.determineWeights(self._defaultWeight)
+        self._coefficients = self.fit(
+            weight=self._defaultWeight,
+            mix=self._defaultMix,
+        )
 
     def toDict(self: Self) -> None:
         return {}
@@ -201,7 +214,6 @@ class ColorGradient:
             lambda _amount: self.evaluate(_amount, weight, mix),
             t,
         ))
-
         model = PolynomialModel(degree=self._degree)
         
         # Fit red
@@ -337,15 +349,13 @@ class ColorGradient:
         self: Self,
         width: float
     ) -> QLinearGradient:
-        # TODO: deduplicate fits
-        fitresult: List[vec3] = self.fit(256, self._defaultWeight, self._defaultMix)
         stopIndices: list[int] = list(range(101))
         newColors = list(map(
             lambda stopIndex: QColor.fromRgbF(
                 *ColorGradient.evaluateFit(
                     # This is the amount here.
                     float(stopIndex) / 100.,
-                    fitresult,
+                    self.coefficients,
                 ),
             ),
             stopIndices,
@@ -392,12 +402,18 @@ class ColorGradient:
         return result
 
 DefaultGradient = ColorGradient(
-    Color(0.15, 0.18, 0.26),
-    Color(0.51, 0.56, 0.66),
-    Color(0.78, 0.67, 0.68),
-    Color(0.96, 0.75, 0.60),
-    Color(0.97, 0.81, 0.55),
-    Color(0.97, 0.61, 0.42),
-    Color(0.91, 0.42, 0.34),
-    Color(0.58, 0.23, 0.22),
+    "Default Gradient",
+    7,
+    GradientWeight.Oklab,
+    GradientMix.Oklab,
+    [
+        Color(0.15, 0.18, 0.26),
+        Color(0.51, 0.56, 0.66),
+        Color(0.78, 0.67, 0.68),
+        Color(0.96, 0.75, 0.60),
+        Color(0.97, 0.81, 0.55),
+        Color(0.97, 0.61, 0.42),
+        Color(0.91, 0.42, 0.34),
+        Color(0.58, 0.23, 0.22),
+    ],
 )
