@@ -10,7 +10,7 @@ from os.path import (
     dirname,
 )
 from imagecolorpicker.colorgradient import DefaultGradient, ColorGradient, GradientMix, GradientWeight
-from imagecolorpicker.gradientmodel import GradientModel
+from imagecolorpicker.model.gradientcolormodel import GradientModel
 from glm import vec3
 
 class GradientEditor(QWidget):

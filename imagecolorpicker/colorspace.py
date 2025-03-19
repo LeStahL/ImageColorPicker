@@ -609,7 +609,7 @@ class ColorSpace:
             if ColorSpaceParameterType.Illuminant in parameterTypes and \
                 ColorSpaceParameterType.Observer in parameterTypes:
                 parameters.append(ColorSpace.Tristimuli[kwargs['observer']][kwargs['illuminant']])
-            print("Applying", transform)
+            # print("Applying", transform)
             result = transform(result, *parameters)
         return result
 

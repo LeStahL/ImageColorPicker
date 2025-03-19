@@ -16,6 +16,7 @@ from typing import (
     Tuple,
     List,
     Optional,
+    Callable,
 )
 from enum import (
     IntEnum,
@@ -44,6 +45,7 @@ from .colorspace import (
     Observer,
     Illuminant,
 )
+from .optimizationmodel import OptimizationModel
 
 
 class GradientWeight(IntEnum):
@@ -237,31 +239,36 @@ class ColorGradient:
             lambda _amount: self.evaluate(_amount),
             t,
         ))
-        model = PolynomialModel(degree=self._degree)
+
+        initialGuess: list[list[float]]
+        model: Callable
+        if self._model == FitModel.HornerPolynomial:
+            model = OptimizationModel.Polynomial
+            initialGuess = OptimizationModel.PolynomialInitialGuess(self._degree)
+        elif self._model == FitModel.Trigonometric:
+            model = OptimizationModel.Cosine
+            initialGuess = OptimizationModel.CosineInitialGuess()
         
         # Fit red
         r = array(list(map(
             lambda color: color.x,
             sampledColors,
         )))
-        initialGuess = model.guess(r, t)
-        rp, _ = curve_fit(ColorGradient.polynomial, t, r, initialGuess, method='trf', loss='arctan')
+        rp, _ = curve_fit(model, t, r, initialGuess[0], method='trf', loss='arctan', maxfev=5000)
 
         # Fit green
         g = array(list(map(
             lambda color: color.y,
             sampledColors,
         )))
-        initialGuess = model.guess(g, t)
-        gp, _ = curve_fit(ColorGradient.polynomial, t, g, initialGuess, method='trf', loss='arctan')
+        gp, _ = curve_fit(model, t, g, initialGuess[1], method='trf', loss='arctan', maxfev=5000)
 
         # Fit red
         b = array(list(map(
             lambda color: color.z,
             sampledColors,
         )))
-        initialGuess = model.guess(b, t)
-        bp, _ = curve_fit(ColorGradient.polynomial, t, b, initialGuess, method='trf', loss='arctan')
+        bp, _ = curve_fit(model, t, b, initialGuess[2], method='trf', loss='arctan', maxfev=5000)
 
         result: List[vec3] = []
         for parameterIndex in range(len(bp)):
@@ -338,13 +345,27 @@ class ColorGradient:
             range(len(result)),
         ))) + ","
 
-    @staticmethod
-    def evaluateFit(t: float, fit: List[vec3]) -> vec3:
-        result: vec3 = vec3(0)
-        for parameterIndex in range(len(fit)):
-            parameter: vec3 = fit[parameterIndex]
-            result += parameter * pow(t, float(parameterIndex))
-        return result
+    def evaluateFit(self: Self, t: float, fit: List[vec3]) -> vec3:
+        model: Callable
+        if self._model == FitModel.HornerPolynomial:
+            model = OptimizationModel.Polynomial
+        elif self._model == FitModel.Trigonometric:
+            model = OptimizationModel.Cosine
+
+        return vec3(
+            model(t, *list(map(
+                lambda fitelement: fitelement.x,
+                fit,
+            ))),
+            model(t, *list(map(
+                lambda fitelement: fitelement.y,
+                fit,
+            ))),
+            model(t, *list(map(
+                lambda fitelement: fitelement.z,
+                fit,
+            ))),
+        )
 
     def buildCSSGradient(
         self: Self,
@@ -355,7 +376,7 @@ class ColorGradient:
         amounts: List[float] = list(map(float,range(101)))
 
         newcolors = list(map(
-            lambda amount: ColorGradient.evaluateFit(float(amount) / 100., fitresult),
+            lambda amount: self.evaluateFit(float(amount) / 100., fitresult),
             amounts,
         ))
 
@@ -375,7 +396,7 @@ class ColorGradient:
         stopIndices: list[int] = list(range(101))
         newColors = list(map(
             lambda stopIndex: QColor.fromRgbF(
-                *ColorGradient.evaluateFit(
+                *self.evaluateFit(
                     # This is the amount here.
                     float(stopIndex) / 100.,
                     self.coefficients,
@@ -401,7 +422,7 @@ class ColorGradient:
         amounts: List[float] = list(map(float,range(101)))
 
         newcolors = list(map(
-            lambda amount: ColorGradient.evaluateFit(float(amount) / 100., fitresult),
+            lambda amount: self.evaluateFit(float(amount) / 100., fitresult),
             amounts,
         ))
 

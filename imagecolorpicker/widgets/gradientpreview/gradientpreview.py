@@ -8,7 +8,7 @@ from sys import argv
 from os.path import dirname
 from imagecolorpicker.colorspace import ColorSpaceType, ColorSpace, Observer, Illuminant
 from imagecolorpicker.color import Color
-from imagecolorpicker.colorgradient import DefaultGradient, GradientWeight, GradientMix, ColorGradient
+from imagecolorpicker.colorgradient import DefaultGradient, GradientWeight, GradientMix, ColorGradient, FitModel
 from imagecolorpicker.widgets.gradientwidget.gradientwidget import GradientWidget
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 from sys import argv
@@ -108,7 +108,7 @@ if __name__ == '__main__':
 
             gradientWidget = GradientWidget(ColorGradient(
                 "Default Gradient",
-                7,
+                4,
                 gradientWeight,
                 gradientMix,
                 [
@@ -123,6 +123,7 @@ if __name__ == '__main__':
                 ],
                 observer=Observer.TenDegreesCIE1964,
                 illuminant=Illuminant.D65,
+                model=FitModel.Trigonometric,
             ))
             gradientWidget.setMinimumWidth(300)
             gradientWidget.setMaximumWidth(300)
