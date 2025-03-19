@@ -9,6 +9,7 @@ from glm import (
     vec3,
     fract,
     length,
+    mix,
 )
 from typing import (
     Self,
@@ -19,6 +20,7 @@ from typing import (
 from enum import (
     IntEnum,
     IntFlag,
+    auto,
 )
 from copy import deepcopy
 from lmfit.models import PolynomialModel
@@ -36,6 +38,13 @@ from construct import (
     Float16b,
     Array,
 )
+from .colorspace import (
+    ColorSpace,
+    ColorSpaceType,
+    Observer,
+    Illuminant,
+)
+
 
 class GradientWeight(IntEnum):
     Oklab = 0x2
@@ -48,24 +57,36 @@ class GradientMix(IntEnum):
     Cielab = 0x2
     RGB = 0x0
 
+class FitModel(IntEnum):
+    Trigonometric = auto()
+    HornerPolynomial = auto()
+
+class Wraparound(IntEnum):
+    Wrap = auto()
+    NoWrap = auto()
+
 class ColorGradient:
     def __init__(
         self: Self,
         name: str,
         degree: int,
-        defaultWeight: GradientWeight,
-        defaultMix: GradientMix,
-        colors: list[Color],
+        weightColorSpace: ColorSpaceType,
+        mixColorSpace: ColorSpaceType,
+        colors: list[vec3],
+        observer: Observer = Observer.TwoDegreesCIE1931,
+        illuminant: Illuminant = Illuminant.D65,
+        model: FitModel = FitModel.HornerPolynomial,
+        wraparound: Wraparound = Wraparound.Wrap,
     ) -> None:
         self._name: str = name
         self._degree: int = degree
-        self._colors: list[Color] = deepcopy(colors)
-        # self._weightColorSpace: ColorSpaceType
-        # self._mixColorSpace: ColorSpaceType
-
-        self._defaultWeight: GradientWeight = defaultWeight
-        self._defaultMix: GradientMix = defaultMix
-
+        self._colors: list[vec3] = deepcopy(colors)
+        self._weightColorSpace: ColorSpaceType = weightColorSpace
+        self._mixColorSpace: ColorSpaceType = mixColorSpace
+        self._observer: Observer = observer
+        self._illuminant: Illuminant = illuminant
+        self._model: FitModel = model
+        self._wraparound: Wraparound = wraparound
         self._weights: list[float] = [0.] * self.colorCount
         self._coefficients: list[vec3] = [vec3(0)] * self.colorCount
         self._update()
@@ -83,105 +104,109 @@ class ColorGradient:
         return self._coefficients
 
     def _update(self: Self) -> None:
-        self._weights = self.determineWeights(self._defaultWeight)
-        self._coefficients = self.fit(
-            weight=self._defaultWeight,
-            mix=self._defaultMix,
-        )
+        self._weights = self.determineWeights()
+        self._coefficients = self.fit()
 
     def toDict(self: Self) -> None:
         return {}
 
     def determineWeights(
         self: Self,
-        weight: GradientWeight = GradientWeight.Oklab,
     ) -> List[float]:
-        if weight == GradientWeight.Unweighted:
-            return list(map(float, linspace(0., 1., len(self._colors) + 1)))[:-1]
-        else:
-            weights: List[float] = [0.0] * len(self._colors)
-            colorspaceDistances: List[float] = [0.0] * len(self._colors)
-            totalColorspaceDistance: float = 0.0
+        weights: List[float] = [0.0] * len(self._colors)
+        colorspaceDistances: List[float] = [0.0] * len(self._colors)
+        totalColorspaceDistance: float = 0.0
+        colorCount: int = self.colorCount if self._wraparound == Wraparound.Wrap else (self._colorCount - 1)
+        for colorIndex in range(colorCount):
+            c1 = ColorSpace.convert(
+                self._colors[colorIndex],
+                ColorSpaceType.SRGB,
+                self._weightColorSpace,
+                observer=self._observer,
+                illuminant=self._illuminant,
+            )
+            c2 = ColorSpace.convert(
+                self._colors[(colorIndex + 1) % len(self._colors)],
+                ColorSpaceType.SRGB,
+                self._weightColorSpace,
+                observer=self._observer,
+                illuminant=self._illuminant,
+            )
 
-            for colorIndex in range(len(self._colors)):
-                c1: Color = deepcopy(self._colors[colorIndex])
-                c2: Color = deepcopy(self._colors[(colorIndex + 1) % len(self._colors)])
+            colorspaceDistance = length(c1 - c2)
+            colorspaceDistances[colorIndex] = colorspaceDistance
+            totalColorspaceDistance += colorspaceDistance
 
-                if weight == GradientWeight.RGB:
-                    c1.toColorSpaceType(ColorSpaceType.RGB)
-                    c2.toColorSpaceType(ColorSpaceType.RGB)
-                elif weight == GradientWeight.Oklab:
-                    c1.toColorSpaceType(ColorSpaceType.OKLAB)
-                    c2.toColorSpaceType(ColorSpaceType.OKLAB)
-                elif weight == GradientWeight.Cielab:
-                    c1.toColorSpaceType(ColorSpaceType.CIELAB)
-                    c2.toColorSpaceType(ColorSpaceType.CIELAB)
-
-                colorspaceDistance = Color.distance(c1, c2)
-                colorspaceDistances[colorIndex] = colorspaceDistance
-                totalColorspaceDistance += colorspaceDistance
-
-            totalDistance: float = 0.0
-            for colorIndex in range(len(self._colors)):
-                colorspaceDistances[colorIndex] /= totalColorspaceDistance
-                weights[colorIndex] = totalDistance
-                totalDistance += colorspaceDistances[colorIndex]
-            
-            return weights
+        totalDistance: float = 0.0
+        for colorIndex in range(len(self._colors)):
+            colorspaceDistances[colorIndex] /= totalColorspaceDistance
+            weights[colorIndex] = totalDistance
+            totalDistance += colorspaceDistances[colorIndex]
+        
+        return weights
 
     def evaluate(
         self: Self,
         amount: float,
-        weight: GradientWeight = GradientWeight.Oklab,
-        mix: GradientMix = GradientMix.Oklab,
-        weights: Optional[List[float]] = None,
     ) -> Color:
         amount = fract(amount)
-        weights = self.determineWeights(weight) if weights is None else weights
+        for colorIndex in range(self.colorCount):
+            if amount < self.weights[(colorIndex + 1) % self.colorCount]:
+                c1 = ColorSpace.convert(
+                    self._colors[colorIndex % self.colorCount],
+                    ColorSpaceType.SRGB,
+                    self._mixColorSpace,
+                    observer=self._observer,
+                    illuminant=self._illuminant,
+                )
+                c2 = ColorSpace.convert(
+                    self._colors[(colorIndex + 1) % self.colorCount],
+                    ColorSpaceType.SRGB,
+                    self._mixColorSpace,
+                    observer=self._observer,
+                    illuminant=self._illuminant,
+                )
 
-        for colorIndex in range(len(self._colors)):
-            if amount < weights[(colorIndex + 1) % len(self._colors)]:
-                c1: Color = deepcopy(self._colors[colorIndex % len(self._colors)])
-                c2: Color = deepcopy(self._colors[(colorIndex + 1) % len(self._colors)])
-
-                if mix == GradientMix.RGB:
-                    c1.toColorSpaceType(ColorSpaceType.RGB)
-                    c2.toColorSpaceType(ColorSpaceType.RGB)
-                elif mix == GradientMix.Oklab:
-                    c1.toColorSpaceType(ColorSpaceType.OKLAB)
-                    c2.toColorSpaceType(ColorSpaceType.OKLAB)
-                elif mix == GradientMix.Cielab:
-                    c1.toColorSpaceType(ColorSpaceType.CIELAB)
-                    c2.toColorSpaceType(ColorSpaceType.CIELAB)
-
-                lowerWeight: float = weights[colorIndex]
-                upperWeight: float = weights[(colorIndex + 1) % len(self._colors)]
+                lowerWeight: float = self.weights[colorIndex]
+                upperWeight: float = self.weights[(colorIndex + 1) % len(self._colors)]
                 localAmount: float = (amount - lowerWeight) / abs(upperWeight - lowerWeight)
                 
-                result: Color = Color.mix(c1, c2, localAmount)
-                result.toColorSpaceType(ColorSpaceType.RGB)
-                return result
+                result: Color = mix(c1, c2, localAmount)
+
+                return ColorSpace.convert(
+                    result,
+                    self._mixColorSpace,
+                    ColorSpaceType.SRGB,
+                    observer=self._observer,
+                    illuminant=self._illuminant,
+                )
         
-        c1: Color = deepcopy(self._colors[-1])
-        c2: Color = deepcopy(self._colors[0])
+        c1 = ColorSpace.convert(
+            self._colors[-1],
+            ColorSpaceType.SRGB,
+            self._mixColorSpace,
+            observer=self._observer,
+            illuminant=self._illuminant,
+        )
+        c2 = ColorSpace.convert(
+            self._colors[0],
+            ColorSpaceType.SRGB,
+            self._mixColorSpace,
+            observer=self._observer,
+            illuminant=self._illuminant,
+        )
 
-        if mix == GradientMix.RGB:
-            c1.toColorSpaceType(ColorSpaceType.RGB)
-            c2.toColorSpaceType(ColorSpaceType.RGB)
-        elif mix == GradientMix.Oklab:
-            c1.toColorSpaceType(ColorSpaceType.OKLAB)
-            c2.toColorSpaceType(ColorSpaceType.OKLAB)
-        elif mix == GradientMix.Cielab:
-            c1.toColorSpaceType(ColorSpaceType.CIELAB)
-            c2.toColorSpaceType(ColorSpaceType.CIELAB)
-
-        lowerWeight: float = weights[-1]
+        lowerWeight: float = self.weights[-1]
         localAmount: float = (amount - lowerWeight) / abs(1. - lowerWeight)
         
-        result = Color.mix(c1, c2, localAmount)
-        result.toColorSpaceType(ColorSpaceType.RGB)
-
-        return result
+        result = mix(c1, c2, localAmount)
+        return ColorSpace.convert(
+            result,
+            self._mixColorSpace,
+            ColorSpaceType.SRGB,
+            observer=self._observer,
+            illuminant=self._illuminant,
+        )
     
     def nearestWeightInColorMap(
         self: Self,
@@ -206,19 +231,17 @@ class ColorGradient:
     def fit(
         self: Self,
         amount: int = 256,
-        weight: GradientWeight = GradientWeight.Oklab,
-        mix: GradientMix = GradientMix.Oklab,
     ) -> List[vec3]:
         t = linspace(0., 1., amount)
         sampledColors: List[Color] = list(map(
-            lambda _amount: self.evaluate(_amount, weight, mix),
+            lambda _amount: self.evaluate(_amount),
             t,
         ))
         model = PolynomialModel(degree=self._degree)
         
         # Fit red
         r = array(list(map(
-            lambda color: color._color.x,
+            lambda color: color.x,
             sampledColors,
         )))
         initialGuess = model.guess(r, t)
@@ -226,7 +249,7 @@ class ColorGradient:
 
         # Fit green
         g = array(list(map(
-            lambda color: color._color.y,
+            lambda color: color.y,
             sampledColors,
         )))
         initialGuess = model.guess(g, t)
@@ -234,7 +257,7 @@ class ColorGradient:
 
         # Fit red
         b = array(list(map(
-            lambda color: color._color.z,
+            lambda color: color.z,
             sampledColors,
         )))
         initialGuess = model.guess(b, t)
@@ -404,16 +427,16 @@ class ColorGradient:
 DefaultGradient = ColorGradient(
     "Default Gradient",
     7,
-    GradientWeight.Oklab,
-    GradientMix.Oklab,
+    ColorSpaceType.OKLAB,
+    ColorSpaceType.OKLAB,
     [
-        Color(0.15, 0.18, 0.26),
-        Color(0.51, 0.56, 0.66),
-        Color(0.78, 0.67, 0.68),
-        Color(0.96, 0.75, 0.60),
-        Color(0.97, 0.81, 0.55),
-        Color(0.97, 0.61, 0.42),
-        Color(0.91, 0.42, 0.34),
-        Color(0.58, 0.23, 0.22),
+        vec3(0.15, 0.18, 0.26),
+        vec3(0.51, 0.56, 0.66),
+        vec3(0.78, 0.67, 0.68),
+        vec3(0.96, 0.75, 0.60),
+        vec3(0.97, 0.81, 0.55),
+        vec3(0.97, 0.61, 0.42),
+        vec3(0.91, 0.42, 0.34),
+        vec3(0.58, 0.23, 0.22),
     ],
 )

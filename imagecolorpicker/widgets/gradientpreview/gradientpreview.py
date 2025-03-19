@@ -85,12 +85,12 @@ class GradientPreview(QOpenGLWidget):
 if __name__ == '__main__':
     app = QApplication(argv)
 
-    widget: QWidget = QWidget()
+    widget: QScrollArea = QScrollArea()
     layout = QVBoxLayout()
     # layout.setContentsMargins(0,0,0,0)
     widget.setLayout(layout)
-    for gradientWeight in GradientWeight:
-        for gradientMix in GradientMix:
+    for gradientWeight in ColorSpaceType:
+        for gradientMix in ColorSpaceType:
             lineWidget: QWidget = QWidget()
             lineLayout: QHBoxLayout = QHBoxLayout()
             lineLayout.setContentsMargins(0,0,0,0)
@@ -108,19 +108,20 @@ if __name__ == '__main__':
                 gradientWeight,
                 gradientMix,
                 [
-                    Color(0.15, 0.18, 0.26),
-                    Color(0.51, 0.56, 0.66),
-                    Color(0.78, 0.67, 0.68),
-                    Color(0.96, 0.75, 0.60),
-                    Color(0.97, 0.81, 0.55),
-                    Color(0.97, 0.61, 0.42),
-                    Color(0.91, 0.42, 0.34),
-                    Color(0.58, 0.23, 0.22),
+                    vec3(0.15, 0.18, 0.26),
+                    vec3(0.51, 0.56, 0.66),
+                    vec3(0.78, 0.67, 0.68),
+                    vec3(0.96, 0.75, 0.60),
+                    vec3(0.97, 0.81, 0.55),
+                    vec3(0.97, 0.61, 0.42),
+                    vec3(0.91, 0.42, 0.34),
+                    vec3(0.58, 0.23, 0.22),
                 ],
             ))
             lineWidget.layout().addWidget(gradientWidget)
 
             widget.layout().addWidget(lineWidget)
+    widget.setMaximumSize(1920,1080)
     widget.resize(200, 400)
     widget.show()
 
