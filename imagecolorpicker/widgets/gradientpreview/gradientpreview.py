@@ -87,11 +87,21 @@ if __name__ == '__main__':
 
     widget: QWidget = QWidget()
     layout = QVBoxLayout()
+    # layout.setContentsMargins(0,0,0,0)
     widget.setLayout(layout)
-    print("sfd")
     for gradientWeight in GradientWeight:
         for gradientMix in GradientMix:
-            print("lol")
+            lineWidget: QWidget = QWidget()
+            lineLayout: QHBoxLayout = QHBoxLayout()
+            lineLayout.setContentsMargins(0,0,0,0)
+            lineWidget.setLayout(lineLayout)
+
+            label: QLabel = QLabel()
+            label.setText(f'{gradientWeight.name}:{gradientMix.name}')
+            label.setMinimumWidth(150)
+            label.setMaximumWidth(150)
+            lineWidget.layout().addWidget(label)
+
             gradientWidget = GradientWidget(ColorGradient(
                 "Default Gradient",
                 7,
@@ -108,7 +118,9 @@ if __name__ == '__main__':
                     Color(0.58, 0.23, 0.22),
                 ],
             ))
-            widget.layout().addWidget(gradientWidget)
+            lineWidget.layout().addWidget(gradientWidget)
+
+            widget.layout().addWidget(lineWidget)
     widget.resize(200, 400)
     widget.show()
 

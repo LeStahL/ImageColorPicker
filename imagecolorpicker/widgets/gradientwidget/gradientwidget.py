@@ -82,7 +82,6 @@ class GradientWidget(QWidget):
 
         font: QFont = QFont()
         font.setPointSizeF(GradientWidget.FontSize)
-        # font.setBold(True)
         font.setWeight(QFont.Weight.ExtraBold)
         painter.setFont(font)
 
@@ -110,7 +109,6 @@ class GradientWidget(QWidget):
 
     def mouseMoveEvent(self, a0: QMouseEvent | None) -> None:
         super().mouseMoveEvent(a0)
-        print("moving")
         self._lastMoveEvent = datetime.now()
         self._lastMovePosition = a0.pos().x() / self.width()
         self.update()
