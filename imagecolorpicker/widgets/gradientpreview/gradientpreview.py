@@ -108,7 +108,7 @@ if __name__ == '__main__':
 
             gradientWidget = GradientWidget(ColorGradient(
                 "Default Gradient",
-                4,
+                6,
                 gradientWeight,
                 gradientMix,
                 [
@@ -131,7 +131,7 @@ if __name__ == '__main__':
                 ],
                 observer=Observer.TenDegreesCIE1964,
                 illuminant=Illuminant.D65,
-                model=FitModel.Trigonometric,
+                model=FitModel.Harmonic,
             ))
             gradientWidget.setMinimumWidth(300)
             gradientWidget.setMaximumWidth(300)
