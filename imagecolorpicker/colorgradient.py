@@ -24,10 +24,13 @@ from copy import deepcopy
 from lmfit.models import PolynomialModel
 from imagecolorpicker.color import (
     Color,
-    ColorSpace,
+    ColorSpaceType,
 )
 from functools import partial
-from PyQt6.QtGui import QColor
+from PyQt6.QtGui import (
+    QColor,
+    QLinearGradient,
+)
 from construct import (
     Float16l,
     Float16b,
@@ -57,8 +60,21 @@ class ColorGradient:
         self._name: str = name
         self._degree: int = degree
         self._colors: List[Color] = deepcopy([*args])
+        # self._weightColorSpace: ColorSpaceType
+        # self._mixColorSpace: ColorSpaceType
+
         self._defaultWeight: GradientWeight = defaultWeight
         self._defaultMix: GradientMix = defaultMix
+
+        self._weights: list[float] = [0.] * len(self._colors)
+        self._update()
+
+    @property
+    def weights(self: Self) -> list[float]:
+        return self._weights
+
+    def _update(self: Self) -> None:
+        self._weights = self.determineWeights(self._defaultWeight)
 
     def toDict(self: Self) -> None:
         return {}
@@ -79,14 +95,14 @@ class ColorGradient:
                 c2: Color = deepcopy(self._colors[(colorIndex + 1) % len(self._colors)])
 
                 if weight == GradientWeight.RGB:
-                    c1.toColorSpace(ColorSpace.RGB)
-                    c2.toColorSpace(ColorSpace.RGB)
+                    c1.toColorSpaceType(ColorSpaceType.RGB)
+                    c2.toColorSpaceType(ColorSpaceType.RGB)
                 elif weight == GradientWeight.Oklab:
-                    c1.toColorSpace(ColorSpace.OKLAB)
-                    c2.toColorSpace(ColorSpace.OKLAB)
+                    c1.toColorSpaceType(ColorSpaceType.OKLAB)
+                    c2.toColorSpaceType(ColorSpaceType.OKLAB)
                 elif weight == GradientWeight.Cielab:
-                    c1.toColorSpace(ColorSpace.CIELAB)
-                    c2.toColorSpace(ColorSpace.CIELAB)
+                    c1.toColorSpaceType(ColorSpaceType.CIELAB)
+                    c2.toColorSpaceType(ColorSpaceType.CIELAB)
 
                 colorspaceDistance = Color.distance(c1, c2)
                 colorspaceDistances[colorIndex] = colorspaceDistance
@@ -116,41 +132,41 @@ class ColorGradient:
                 c2: Color = deepcopy(self._colors[(colorIndex + 1) % len(self._colors)])
 
                 if mix == GradientMix.RGB:
-                    c1.toColorSpace(ColorSpace.RGB)
-                    c2.toColorSpace(ColorSpace.RGB)
+                    c1.toColorSpaceType(ColorSpaceType.RGB)
+                    c2.toColorSpaceType(ColorSpaceType.RGB)
                 elif mix == GradientMix.Oklab:
-                    c1.toColorSpace(ColorSpace.OKLAB)
-                    c2.toColorSpace(ColorSpace.OKLAB)
+                    c1.toColorSpaceType(ColorSpaceType.OKLAB)
+                    c2.toColorSpaceType(ColorSpaceType.OKLAB)
                 elif mix == GradientMix.Cielab:
-                    c1.toColorSpace(ColorSpace.CIELAB)
-                    c2.toColorSpace(ColorSpace.CIELAB)
+                    c1.toColorSpaceType(ColorSpaceType.CIELAB)
+                    c2.toColorSpaceType(ColorSpaceType.CIELAB)
 
                 lowerWeight: float = weights[colorIndex]
                 upperWeight: float = weights[(colorIndex + 1) % len(self._colors)]
                 localAmount: float = (amount - lowerWeight) / abs(upperWeight - lowerWeight)
                 
                 result: Color = Color.mix(c1, c2, localAmount)
-                result.toColorSpace(ColorSpace.RGB)
+                result.toColorSpaceType(ColorSpaceType.RGB)
                 return result
         
         c1: Color = deepcopy(self._colors[-1])
         c2: Color = deepcopy(self._colors[0])
 
         if mix == GradientMix.RGB:
-            c1.toColorSpace(ColorSpace.RGB)
-            c2.toColorSpace(ColorSpace.RGB)
+            c1.toColorSpaceType(ColorSpaceType.RGB)
+            c2.toColorSpaceType(ColorSpaceType.RGB)
         elif mix == GradientMix.Oklab:
-            c1.toColorSpace(ColorSpace.OKLAB)
-            c2.toColorSpace(ColorSpace.OKLAB)
+            c1.toColorSpaceType(ColorSpaceType.OKLAB)
+            c2.toColorSpaceType(ColorSpaceType.OKLAB)
         elif mix == GradientMix.Cielab:
-            c1.toColorSpace(ColorSpace.CIELAB)
-            c2.toColorSpace(ColorSpace.CIELAB)
+            c1.toColorSpaceType(ColorSpaceType.CIELAB)
+            c2.toColorSpaceType(ColorSpaceType.CIELAB)
 
         lowerWeight: float = weights[-1]
         localAmount: float = (amount - lowerWeight) / abs(1. - lowerWeight)
         
         result = Color.mix(c1, c2, localAmount)
-        result.toColorSpace(ColorSpace.RGB)
+        result.toColorSpaceType(ColorSpaceType.RGB)
 
         return result
     
@@ -316,6 +332,32 @@ class ColorGradient:
                 range(len(newcolors)),
             )),
         )
+
+    def linearGradient(
+        self: Self,
+        width: float
+    ) -> QLinearGradient:
+        # TODO: deduplicate fits
+        fitresult: List[vec3] = self.fit(256, self._defaultWeight, self._defaultMix)
+        stopIndices: list[int] = list(range(101))
+        newColors = list(map(
+            lambda stopIndex: QColor.fromRgbF(
+                *ColorGradient.evaluateFit(
+                    # This is the amount here.
+                    float(stopIndex) / 100.,
+                    fitresult,
+                ),
+            ),
+            stopIndices,
+        ))
+
+        gradient: QLinearGradient = QLinearGradient()
+        gradient.setStart(0, 0)
+        gradient.setFinalStop(width, 0)
+        for stopIndex in stopIndices:
+            gradient.setColorAt(float(stopIndex) / 100., newColors[stopIndex])
+        
+        return gradient
     
     def buildSVGGradient(
         self: Self,
