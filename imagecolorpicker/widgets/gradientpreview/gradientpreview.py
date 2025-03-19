@@ -135,6 +135,8 @@ if __name__ == '__main__':
             ))
             gradientWidget.setMinimumWidth(300)
             gradientWidget.setMaximumWidth(300)
+            gradientWidget.setMinimumHeight(40)
+            gradientWidget.setMaximumHeight(40)
             lineWidget.layout().addWidget(gradientWidget)
 
             widget.layout().addWidget(lineWidget)
