@@ -16,15 +16,16 @@ from typing import (
 )
 from enum import IntEnum
 from copy import deepcopy
+from .colorspace import ColorSpaceType
 
-class ColorSpaceType(IntEnum):
-    RGB = 0x0
-    XYZ_SRGB = 0x1
-    OKLAB = 0x2
-    OKLCH = 0x3
-    CIEXYZ = 0x4
-    CIELAB = 0x5
-    CIELCH = 0x6
+# class ColorSpaceType(IntEnum):
+#     RGB = 0x0
+#     CIEXYZ = 0x1
+#     OKLAB = 0x2
+#     OKLCH = 0x3
+#     CIEXYZ = 0x4
+#     CIELAB = 0x5
+#     CIELCH = 0x6
 
 class ColorSpace:
     # sRGB constants
@@ -236,7 +237,7 @@ class Color:
         ColorSpaceType.CIELAB,
         ColorSpaceType.CIEXYZ,
         ColorSpaceType.RGB,
-        ColorSpaceType.XYZ_SRGB,
+        ColorSpaceType.CIEXYZ,
         ColorSpaceType.OKLAB,
         ColorSpaceType.OKLCH,
     ]
@@ -275,13 +276,13 @@ class Color:
             origin: ColorSpaceType = Color.ConversionOrder[index]
             target: ColorSpaceType = Color.ConversionOrder[nextIndex]
 
-            if origin == ColorSpaceType.RGB and target == ColorSpaceType.XYZ_SRGB:
+            if origin == ColorSpaceType.RGB and target == ColorSpaceType.CIEXYZ:
                 self._color = Color.Msrgb * self._color
-            elif origin == ColorSpaceType.XYZ_SRGB and target == ColorSpaceType.RGB:
+            elif origin == ColorSpaceType.CIEXYZ and target == ColorSpaceType.RGB:
                 self._color = Color.MsrgbInv * self._color
-            elif origin == ColorSpaceType.XYZ_SRGB and target == ColorSpaceType.OKLAB:
+            elif origin == ColorSpaceType.CIEXYZ and target == ColorSpaceType.OKLAB:
                 self._color = Color.M2 * pow(Color.M1 * self._color, vec3(1.0/3.0))
-            elif origin == ColorSpaceType.OKLAB and target == ColorSpaceType.XYZ_SRGB:
+            elif origin == ColorSpaceType.OKLAB and target == ColorSpaceType.CIEXYZ:
                 self._color = Color.M1Inv * pow(Color.M2Inv * self._color, vec3(3.0))
             elif origin == ColorSpaceType.OKLAB and target == ColorSpaceType.OKLCH:
                 self._color = vec3(self._color.x, length(self._color.yz), atan(self._color.z, self._color.y))

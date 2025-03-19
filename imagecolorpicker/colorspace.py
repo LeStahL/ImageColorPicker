@@ -220,22 +220,52 @@ class ColorSpace:
 
     @staticmethod
     def CIEXYZToCIELAB(ciexyz: vec3, whitepoint: vec3) -> vec3:
-        xyz: vec3 = ciexyz / whitepoint
-        gy: float = ColorSpace.g(xyz.y)
+        var_X = ciexyz.x / whitepoint.x
+        var_Y = ciexyz.y / whitepoint.y
+        var_Z = ciexyz.z / whitepoint.z
+        if var_X > 0.008856:
+            var_X = pow(var_X, 1 / 3)
+        else:
+            var_X = 7.787 * var_X + 16 / 116
+        if var_Y > 0.008856:
+            var_Y = pow(var_Y, 1 / 3)
+        else:
+            var_Y = 7.787 * var_Y + 16 / 116
+        if var_Z > 0.008856:
+            var_Z = pow(var_Z, 1 / 3)
+        else:
+            var_Z = 7.787 * var_Z + 16 / 116
+
         return vec3(
-            116.0 * gy - 16.0,
-            500.0 * (ColorSpace.g(xyz.x) - gy),
-            200.0 * (gy - ColorSpace.g(xyz.z)),
+            116 * var_Y - 16,
+            500 * (var_X - var_Y),
+            200 * (var_Y - var_Z),
         )
 
     @staticmethod
     def CIELABToCIEXYZ(cielab: vec3, whitepoint: vec3) -> vec3:
-        l16: float = (cielab.x + 16.0) / 116.0
-        return whitepoint * vec3(
-            ColorSpace.ginv(l16 + cielab.y / 500.0),
-            ColorSpace.ginv(l16),
-            ColorSpace.ginv(l16 - cielab.z),
-        )
+        var_Y = (cielab.x + 16) / 116
+        var_X = cielab.y / 500 + var_Y
+        var_Z = var_Y - cielab.z / 200
+
+        if pow(var_Y, 3) > 0.008856:
+            var_Y = pow(var_Y, 3)
+        else:
+            var_Y = (var_Y - 16 / 116) / 7.787
+        if pow(var_X, 3) > 0.008856:
+            var_X = pow(var_X, 3)
+        else:
+            var_X = (var_X - 16 / 116) / 7.787
+        if pow(var_Z, 3) > 0.008856:
+            var_Z = pow(var_Z, 3)
+        else:
+            var_Z = (var_Z - 16 / 116) / 7.787
+
+        return vec3(
+            var_X,
+            var_Y,
+            var_Z,
+        ) * whitepoint
 
     @staticmethod
     def CartesianToPolar(lab: vec3) -> vec3:
@@ -255,7 +285,7 @@ class ColorSpace:
 
     @staticmethod
     def CIEXYZToOKLAB(ciexyz: vec3) -> vec3:
-        return ColorSpace.OKLABM2 * pow(ColorSpace.OKLABM1 * ciexyz, vec3(3.0))
+        return ColorSpace.OKLABM2 * pow(ColorSpace.OKLABM1 * ciexyz, vec3(1. / 3.))
     
     @staticmethod
     def OKLABToCIEXYZ(oklab: vec3) -> vec3:
@@ -263,22 +293,25 @@ class ColorSpace:
 
     @staticmethod
     def CIEXYZToHunterLAB(ciexyz: vec3, whitepoint: vec3) -> vec3:
-        xyz: vec3 = ciexyz / whitepoint
-        ys: float = sqrt(xyz.y)
+        var_Ka = 175.0 / 198.04 * (whitepoint.y + whitepoint.x)
+        var_Kb = 70.0 / 218.11 * (whitepoint.y + whitepoint.z)
+
         return vec3(
-            100.0 * ys,
-            175.0 / 198.04 * (whitepoint.y + whitepoint.x) * (( xyz.x - xyz.y ) / ys),
-            70.0 / 218.11 * (whitepoint.y + whitepoint.z) * (( xyz.y - xyz.z ) / ys),
+            100.0 * sqrt(ciexyz.y / whitepoint.y),
+            var_Ka * (ciexyz.x / whitepoint.x - ciexyz.y / whitepoint.y) / sqrt(ciexyz.y / whitepoint.y),
+            var_Kb * (ciexyz.y / whitepoint.y - ciexyz.z / whitepoint.z) / sqrt(ciexyz.y / whitepoint.y),
         )
-    
+
     @staticmethod
     def HunterLABToCIEXYZ(hunterlab: vec3, whitepoint: vec3) -> vec3:
-        sk: float =  ( ( hunterlab.x / whitepoint.y ) ^ 2 ) * 100.0
-        return vec3(
-            (hunterlab.y / 175.0 * 198.04 * (whitepoint.y + whitepoint.x) * sqrt(sk / whitepoint.y) + sk / whitepoint.y) * whitepoint.x,
-            sk,
-            -(hunterlab.z / 70.0 * 218.11 * (whitepoint.y + whitepoint.z) * sqrt(sk / whitepoint.y) - sk / whitepoint.y) * whitepoint.z,
-        )
+        var_Ka = 175.0 / 198.04 * (whitepoint.y + whitepoint.x)
+        var_Kb = 70.0 / 218.11 * (whitepoint.y + whitepoint.z)
+        
+        Y = pow(hunterlab.x / whitepoint.y, 2) * 100.0
+        X = (hunterlab.y / var_Ka * sqrt(Y / whitepoint.y) + Y / whitepoint.y) * whitepoint.x
+        Z = -(hunterlab.z / var_Kb * sqrt(Y / whitepoint.y) - Y / whitepoint.y) * whitepoint.z
+
+        return vec3(X, Y, Z)
     
     # RGB to HSL (hue, saturation, lightness/luminance).
     # Based on: https://gist.github.com/yiwenl/745bfea7f04c456e0101

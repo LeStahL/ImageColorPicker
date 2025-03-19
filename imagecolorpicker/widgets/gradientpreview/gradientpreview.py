@@ -6,7 +6,8 @@ from PyQt6.QtOpenGLWidgets import *
 from OpenGL.GL import *
 from sys import argv
 from os.path import dirname
-from imagecolorpicker.color import Color, ColorSpaceType
+from imagecolorpicker.colorspace import ColorSpaceType, ColorSpace
+from imagecolorpicker.color import Color
 from imagecolorpicker.colorgradient import DefaultGradient, GradientWeight, GradientMix, ColorGradient
 from imagecolorpicker.widgets.gradientwidget.gradientwidget import GradientWidget
 from jinja2 import Environment, FileSystemLoader, select_autoescape
@@ -85,7 +86,10 @@ class GradientPreview(QOpenGLWidget):
 if __name__ == '__main__':
     app = QApplication(argv)
 
-    widget: QScrollArea = QScrollArea()
+    scrollwidget: QScrollArea = QScrollArea()
+    scrollwidget.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOn)
+    widget: QWidget = QWidget()
+    widget.move(0,0)
     layout = QVBoxLayout()
     # layout.setContentsMargins(0,0,0,0)
     widget.setLayout(layout)
@@ -118,11 +122,15 @@ if __name__ == '__main__':
                     vec3(0.58, 0.23, 0.22),
                 ],
             ))
+            gradientWidget.setMinimumWidth(300)
+            gradientWidget.setMaximumWidth(300)
             lineWidget.layout().addWidget(gradientWidget)
 
             widget.layout().addWidget(lineWidget)
-    widget.setMaximumSize(1920,1080)
-    widget.resize(200, 400)
-    widget.show()
+    # widget.setMaximumSize(400,400)
+    scrollwidget.setWidget(widget)
+
+    scrollwidget.resize(200, 400)
+    scrollwidget.show()
 
     app.exec()
