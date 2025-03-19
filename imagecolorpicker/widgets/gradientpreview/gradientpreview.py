@@ -6,7 +6,7 @@ from PyQt6.QtOpenGLWidgets import *
 from OpenGL.GL import *
 from sys import argv
 from os.path import dirname
-from imagecolorpicker.colorspace import ColorSpaceType, ColorSpace
+from imagecolorpicker.colorspace import ColorSpaceType, ColorSpace, Observer, Illuminant
 from imagecolorpicker.color import Color
 from imagecolorpicker.colorgradient import DefaultGradient, GradientWeight, GradientMix, ColorGradient
 from imagecolorpicker.widgets.gradientwidget.gradientwidget import GradientWidget
@@ -121,6 +121,8 @@ if __name__ == '__main__':
                     vec3(0.91, 0.42, 0.34),
                     vec3(0.58, 0.23, 0.22),
                 ],
+                observer=Observer.TenDegreesCIE1964,
+                illuminant=Illuminant.D65,
             ))
             gradientWidget.setMinimumWidth(300)
             gradientWidget.setMaximumWidth(300)

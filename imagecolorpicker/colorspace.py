@@ -49,6 +49,7 @@ class ColorSpaceType(IntEnum):
     HSV = 0xC
     CIELuv = 0xD
     AdobeRGB = 0xE
+    ACESAP1 = 0xF
 
 class ColorSpaceParameterType(IntFlag):
     NoParameters = 0x0
@@ -158,6 +159,13 @@ class ColorSpace:
         -0.0040720468, 0.4505937099, -0.8086757660
     )
     OKLABM2Inv: mat3 = inverse(OKLABM2)
+
+    MACESAPMInv: mat3 = mat3(
+        1.6410233797, -0.3248032942, -0.2364246952,
+        -0.6636628587,  1.6153315917,  0.0167563477,
+        0.0117218943, -0.0082844420,  0.9883948585,
+    )
+    MACESAPM: mat3 = inverse(MACESAPMInv)
 
     # Based on code by tobspr, available at https://github.com/tobspr/GLSL-Color-Spaces/blob/master/ColorSpaces.inc.glsl,
     # licensed under MIT.
@@ -540,6 +548,14 @@ class ColorSpace:
         Z = var_R * 0.02703 + var_G * 0.07069 + var_B * 0.99110
 
         return vec3(X, Y, Z)
+    
+    @staticmethod
+    def CIEXYZToACESAP1(ciexyz: vec3) -> vec3:
+        return ColorSpace.MACESAPM * ciexyz
+    
+    @staticmethod
+    def ACESAP1ToCIEXYZ(ap1: vec3) -> vec3:
+        return ColorSpace.MACESAPMInv * ap1
 
     Edges: dict[tuple[ColorSpaceType, ColorSpaceType], tuple[Callable[[vec3, list[float]], vec3], ColorSpaceParameterType]] = {
         (ColorSpaceType.SRGB, ColorSpaceType.RGB): (SRGBToRGB, ColorSpaceParameterType.NoParameters),
@@ -570,6 +586,8 @@ class ColorSpace:
         (ColorSpaceType.CIELuv, ColorSpaceType.CIEXYZ): (CIELuvToCIEXYZ, ColorSpaceParameterType.Illuminant | ColorSpaceParameterType.Observer),
         (ColorSpaceType.CIEXYZ, ColorSpaceType.AdobeRGB): (CIEXYZToAdobeRGB, ColorSpaceParameterType.NoParameters),
         (ColorSpaceType.AdobeRGB, ColorSpaceType.CIEXYZ): (AdobeRGBToCIEXYZ, ColorSpaceParameterType.NoParameters),
+        (ColorSpaceType.CIEXYZ, ColorSpaceType.ACESAP1): (CIEXYZToACESAP1, ColorSpaceParameterType.NoParameters),
+        (ColorSpaceType.ACESAP1, ColorSpaceType.CIEXYZ): (ACESAP1ToCIEXYZ, ColorSpaceParameterType.NoParameters),
     }
 
     Graph: DiGraph = DiGraph(Edges.keys())
