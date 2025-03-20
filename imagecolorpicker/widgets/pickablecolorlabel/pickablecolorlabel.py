@@ -9,14 +9,13 @@ from PyQt6.QtNetwork import (
     QNetworkReply,
 )
 from sys import argv
-from os.path import (
-    join,
-    dirname,
-)
+from importlib.resources import files
+from pathlib import Path
 from bs4 import BeautifulSoup
 from base64 import b64decode
 from traceback import print_exc
 from requests import get
+from imagecolorpicker.widgets import pickablecolorlabel
 
 class PickableColorLabel(QWidget):
     DefaultImage = 'default.png'
@@ -36,7 +35,7 @@ class PickableColorLabel(QWidget):
         self.setMouseTracking(True)
         self.setAcceptDrops(True)
 
-        self._image: QImage = QImage(join(dirname(__file__), PickableColorLabel.DefaultImage))
+        self._image: QImage = QImage(str(files(pickablecolorlabel) / PickableColorLabel.DefaultImage))
         self._cursor: QPointF = QPointF(0., 0.)
         self._color: QColor = QColor()
         self._picking: bool = False
@@ -44,7 +43,7 @@ class PickableColorLabel(QWidget):
         self._networkManager: QNetworkAccessManager = QNetworkAccessManager()
 
     @property
-    def components(self: Self) -> Tuple[float]:
+    def components(self: Self) -> tuple[float, float, float]:
         return self._color.redF(), self._color.greenF(), self._color.blueF()
 
     def paintEvent(self: Self, a0: Optional[QPaintEvent]) -> None:
@@ -127,11 +126,12 @@ class PickableColorLabel(QWidget):
 
         # print(a0.mimeData().formats())
 
-        if True in [
-            a0.mimeData().hasImage(),
-            a0.mimeData().hasHtml(),
-            a0.mimeData().hasUrls(),
-        ]:
+        if a0.mimeData() is None:
+            return
+
+        if a0.mimeData().hasImage() or \
+            a0.mimeData().hasHtml() or \
+            a0.mimeData().hasUrls():
             a0.acceptProposedAction()
 
     def dropEvent(self: Self, a0: QDropEvent) -> None:
@@ -188,3 +188,11 @@ class PickableColorLabel(QWidget):
         except:
             print_exc()
             print("Attempted to load unsupported image binary.")
+
+if __name__ == '__main__':
+    app: QApplication = QApplication(argv)
+
+    label: PickableColorLabel = PickableColorLabel()
+    label.show()
+
+    app.exec()

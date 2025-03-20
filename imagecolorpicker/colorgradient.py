@@ -68,6 +68,12 @@ class Wraparound(IntEnum):
     Wrap = auto()
     NoWrap = auto()
 
+class FitAlgorithm(IntEnum):
+    LM = auto()
+    TRF = auto()
+    DogBox = auto()
+    CMAES = auto()
+
 class ColorGradient:
     def __init__(
         self: Self,
@@ -80,6 +86,9 @@ class ColorGradient:
         illuminant: Illuminant = Illuminant.D65,
         model: FitModel = FitModel.HornerPolynomial,
         wraparound: Wraparound = Wraparound.Wrap,
+        fitAlgorithm: FitAlgorithm = FitAlgorithm.LM,
+        maxFitIterationCount: int = 5000,
+        fitAmount: int = 256,
     ) -> None:
         self._name: str = name
         self._degree: int = degree
@@ -92,6 +101,9 @@ class ColorGradient:
         self._wraparound: Wraparound = wraparound
         self._weights: list[float] = [0.] * self.colorCount
         self._coefficients: list[vec3] = [vec3(0)] * self.colorCount
+        self._fitAlgorithm: FitAlgorithm = fitAlgorithm
+        self._maxFitIterationCount: int = maxFitIterationCount
+        self._fitAmount: int = fitAmount
         self._update()
 
     @property
@@ -110,8 +122,44 @@ class ColorGradient:
         self._weights = self.determineWeights()
         self._coefficients = self.fit()
 
-    def toDict(self: Self) -> None:
-        return {}
+    def toDict(self: Self) -> dict:
+        return {
+            'name': self._name,
+            'degree': self._degree,
+            'colors': list(map(
+                lambda color: [color.x, color.y, color.z],
+                self._colors,
+            )),
+            'weight_color_space': self._weightColorSpace.name,
+            'mix_color_space': self._mixColorSpace.name,
+            'observer': self._observer.name,
+            'illuminant': self._illuminant.name,
+            'model': self._model.name,
+            'wraparound': self._wraparound.name,
+            'algorithm': self._fitAlgorithm.name,
+            'max_fit_iteration_count': self._maxFitIterationCount,
+            'fit_amount': self._fitAmount,
+        }
+    
+    @classmethod
+    def fromDict(cls: type[Self], info: dict) -> 'ColorGradient':
+        return cls(
+            name=info['name'],
+            degree=info['degree'],
+            colors=list(map(
+                lambda components: vec3(*components),
+                info['colors'],
+            )),
+            weightColorSpace = ColorSpaceType[info['weight_color_space']],
+            mixColorSpace = ColorSpaceType[info['mix_color_space']],
+            observer = Observer[info['observer']],
+            illuminant = Illuminant[info['illuminant']],
+            model = FitModel[info['model']],
+            wraparound = Wraparound[info['wraparound']],
+            fitAlgorithm = FitAlgorithm[info['algorithm']],
+            maxFitIterationCount = info['max_fit_iteration_count'],
+            fitAmount = info['fit_amount'],
+        )
 
     def determineWeights(
         self: Self,
@@ -397,6 +445,7 @@ class ColorGradient:
 
     def linearGradient(
         self: Self,
+        start: float,
         width: float
     ) -> QLinearGradient:
         stopIndices: list[int] = list(range(101))
@@ -412,8 +461,8 @@ class ColorGradient:
         ))
 
         gradient: QLinearGradient = QLinearGradient()
-        gradient.setStart(0, 0)
-        gradient.setFinalStop(width, 0)
+        gradient.setStart(start, 0)
+        gradient.setFinalStop(start + width, 0)
         for stopIndex in stopIndices:
             gradient.setColorAt(float(stopIndex) / 100., newColors[stopIndex])
         
@@ -451,8 +500,8 @@ class ColorGradient:
             result = ck + t * result
         return result
 
-DefaultGradient = ColorGradient(
-    "Default Gradient",
+DefaultGradient1 = ColorGradient(
+    "Default Gradient 1",
     7,
     ColorSpaceType.OKLAB,
     ColorSpaceType.OKLAB,
@@ -465,5 +514,21 @@ DefaultGradient = ColorGradient(
         vec3(0.97, 0.61, 0.42),
         vec3(0.91, 0.42, 0.34),
         vec3(0.58, 0.23, 0.22),
+    ],
+)
+DefaultGradient2 = ColorGradient(
+    "Default Gradient 2",
+    7,
+    ColorSpaceType.CIELAB,
+    ColorSpaceType.CIELAB,
+    [
+        vec3(0.02, 0.07, 0.16),
+        vec3(0.07, 0.31, 0.41),
+        vec3(0.38, 0.67, 0.69),
+        vec3(0.95, 0.85, 0.76),
+        vec3(0.98, 0.94, 0.83),
+        vec3(0.99, 0.92, 0.51),
+        vec3(0.92, 0.44, 0.40),
+        vec3(0.46, 0.25, 0.33),
     ],
 )

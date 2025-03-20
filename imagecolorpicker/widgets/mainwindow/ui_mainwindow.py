@@ -1,4 +1,4 @@
-# Form implementation generated from reading ui file 'C:\Demo\ImageColorPicker\imagecolorpicker\widgets\mainwindow\mainwindow.ui'
+# Form implementation generated from reading ui file '/home/nr4/code/ImageColorPicker/imagecolorpicker/widgets/mainwindow/mainwindow.ui'
 #
 # Created by: PyQt6 UI code generator 6.8.1
 #
@@ -143,4 +143,4 @@ class Ui_MainWindow(object):
         self.actionExport_Palette.setText(_translate("MainWindow", "Export Palette..."))
         self.actionImport_Palette.setText(_translate("MainWindow", "Import Palette..."))
         self.actionForce_16_9_View.setText(_translate("MainWindow", "Force 16:9 View"))
-from imagecolorpicker.pickablecolorlabel import PickableColorLabel
+from imagecolorpicker.widgets.pickablecolorlabel.pickablecolorlabel import PickableColorLabel

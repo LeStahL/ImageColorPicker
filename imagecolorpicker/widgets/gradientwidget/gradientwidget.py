@@ -27,7 +27,7 @@ from imagecolorpicker.colorgradient import (
     ColorGradient,
     GradientWeight,
     GradientMix,
-    DefaultGradient,
+    DefaultGradient1,
 )
 from imagecolorpicker.color import (
     Color,
@@ -61,17 +61,25 @@ class GradientWidget(QWidget):
     ) -> None:
         super().paintEvent(a0)
 
-        painter: QPainter = QPainter(self)
+        self.paint(self.rect())
+
+    def paint(
+        self: Self,
+        rect: QRect,
+        painter: Optional[QPainter] = None,
+    ) -> None:
+        if painter is None:
+            painter = QPainter(self)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
 
-        brush: QBrush = QBrush(self._gradient.linearGradient(self.width()))
+        brush: QBrush = QBrush(self._gradient.linearGradient(rect.x(), rect.width()))
 
         palette: QPalette = QApplication.palette()
 
-        painter.fillRect(self.rect(), brush)
+        painter.fillRect(rect, brush)
         backgroundColor: QColor = QColor(palette.color(QPalette.ColorGroup.Normal, QPalette.ColorRole.Window))
         painter.setBrush(backgroundColor)
-        painter.fillRect(QRectF(0., self.height() - 1 * GradientWidget.WeightDotSize - 1., self.width(), 3 * GradientWidget.WeightDotSize + 1.), backgroundColor)
+        painter.fillRect(QRectF(rect.x(), rect.y() + rect.height() - 1 * GradientWidget.WeightDotSize - 1., rect.width(), 3 * GradientWidget.WeightDotSize + 1.), backgroundColor)
         painter.setBrush(brush)
 
         pen: QPen = QPen()
@@ -88,35 +96,35 @@ class GradientWidget(QWidget):
         for weight in self._gradient.weights:
             pen.setBrush(brush)
             painter.setPen(pen)
-            painter.drawLine(QPointF(weight * self.width(), self.height() - 3 * GradientWidget.WeightDotSize), QPointF(weight * self.width(), self.height()))
+            painter.drawLine(QPointF(rect.x() + weight * rect.width(), rect.y() + rect.height() - 3 * GradientWidget.WeightDotSize), QPointF(rect.x() + weight * rect.width(), rect.y() + rect.height() - 2))
 
         pen.setWidth(2)
         # Draw cursor
         if (datetime.now() - self._lastMoveEvent).total_seconds() < GradientWidget.CursorTimeout:
             painter.setBrush(backgroundColor)
-            painter.fillRect(QRectF(self._lastMovePosition * self.width(), self.height() - 3 * GradientWidget.WeightDotSize - 1., 40., 3 * GradientWidget.WeightDotSize + 1.), backgroundColor)
+            painter.fillRect(QRectF(rect.x() + self._lastMovePosition * rect.width(), rect.y() + rect.height() - 3 * GradientWidget.WeightDotSize - 1., 40., 3 * GradientWidget.WeightDotSize + 1.), backgroundColor)
         
             pen.setColor(foregroudColor)
             painter.setPen(pen)
             painter.drawText(
-                QPointF(self._lastMovePosition * self.width() + 2 * GradientWidget.WeightDotSize, self.height() - 1),
+                QPointF(rect.x() + self._lastMovePosition * rect.width() + 2 * GradientWidget.WeightDotSize, rect.y() + rect.height() - 1),
                 f'{self._lastMovePosition:.2f}',
             )
-            painter.drawLine(QPointF(self._lastMovePosition * self.width(), 0), QPointF(self._lastMovePosition * self.width(), self.height()))
+            painter.drawLine(QPointF(rect.x() + self._lastMovePosition * rect.width(), rect.y()), QPointF(rect.x() + self._lastMovePosition * rect.width(), rect.y() + rect.height()))
             pen.setColor(backgroundColor)
             painter.setPen(pen)
-            painter.drawLine(QPointF(self._lastMovePosition * self.width() + 1, 0), QPointF(self._lastMovePosition * self.width() + 1, self.height()))
+            painter.drawLine(QPointF(rect.x() + self._lastMovePosition * rect.width() + 1, rect.y()), QPointF(rect.x() + self._lastMovePosition * rect.width() + 1, rect.y() + rect.height()))
 
     def mouseMoveEvent(self, a0: QMouseEvent | None) -> None:
         super().mouseMoveEvent(a0)
         self._lastMoveEvent = datetime.now()
-        self._lastMovePosition = a0.pos().x() / self.width()
+        self._lastMovePosition = (a0.pos().x() - self.rect().x()) / self.width()
         self.update()
         self._timer.singleShot(int(1000 * GradientWidget.CursorTimeout) + 1000, self.update)
         
 
 if __name__ == '__main__':
     app: QApplication = QApplication(argv)
-    gradientWidget: GradientWidget = GradientWidget(DefaultGradient)
+    gradientWidget: GradientWidget = GradientWidget(DefaultGradient1)
     gradientWidget.show()
     app.exec()

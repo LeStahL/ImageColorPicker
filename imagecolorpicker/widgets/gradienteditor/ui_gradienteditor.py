@@ -1,4 +1,4 @@
-# Form implementation generated from reading ui file 'C:\Demo\ImageColorPicker\imagecolorpicker\widgets\gradienteditor\gradienteditor.ui'
+# Form implementation generated from reading ui file '/home/nr4/code/ImageColorPicker/imagecolorpicker/widgets/gradienteditor/gradienteditor.ui'
 #
 # Created by: PyQt6 UI code generator 6.8.1
 #
