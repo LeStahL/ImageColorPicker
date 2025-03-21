@@ -25,10 +25,6 @@ from enum import (
 )
 from copy import deepcopy
 from lmfit.models import PolynomialModel
-from imagecolorpicker.color import (
-    Color,
-    ColorSpaceType,
-)
 from functools import partial
 from PyQt6.QtGui import (
     QColor,
@@ -145,7 +141,7 @@ class ColorGradient:
     def fromDict(cls: type[Self], info: dict) -> 'ColorGradient':
         return cls(
             name=info['name'],
-            degree=info['degree'],
+            degree=int(info['degree']),
             colors=list(map(
                 lambda components: vec3(*components),
                 info['colors'],
@@ -157,8 +153,8 @@ class ColorGradient:
             model = FitModel[info['model']],
             wraparound = Wraparound[info['wraparound']],
             fitAlgorithm = FitAlgorithm[info['algorithm']],
-            maxFitIterationCount = info['max_fit_iteration_count'],
-            fitAmount = info['fit_amount'],
+            maxFitIterationCount = int(info['max_fit_iteration_count']),
+            fitAmount = int(info['fit_amount']),
         )
 
     def determineWeights(

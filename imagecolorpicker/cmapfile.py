@@ -69,6 +69,6 @@ class CMapFile:
             info['gradients'],
         ))
         self._previewColorSpaces = list(map(
-            lambda previewInfo: [previewInfo['weight'], previewInfo['mix']],
+            lambda previewInfo: [ColorSpaceType[previewInfo['weight']], ColorSpaceType[previewInfo['mix']]],
             info['preview_color_spaces'],
         ))

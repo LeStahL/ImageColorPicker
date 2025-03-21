@@ -29,9 +29,6 @@ from imagecolorpicker.colorgradient import (
     GradientMix,
     DefaultGradient1,
 )
-from imagecolorpicker.color import (
-    Color,
-)
 from sys import argv
 from datetime import datetime, timedelta
 
