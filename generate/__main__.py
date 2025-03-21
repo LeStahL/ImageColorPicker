@@ -33,7 +33,6 @@ if __name__ == '__main__':
 
     # PyQt UI files.
     UIFiles: list[Path] = [
-        files(widgets) / 'gradienteditor' / 'gradienteditor.ui',
         files(widgets) / 'mainwindow' / 'mainwindow.ui',
     ]
 

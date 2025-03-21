@@ -4,13 +4,14 @@ from typing import (
 )
 from PyQt6.QtGui import QImage
 from imagecolorpicker.colorgradient import ColorGradient
-from uuid import uuid4
 from pathlib import Path
 from imagecolorpicker.colorspace import ColorSpaceType
 from rtoml import (
     loads,
     dumps,
 )
+from hashlib import md5
+from PyQt6.QtCore import QByteArray
 
 class CMapFile:
     DefaultPreviewColorSpaces: list[list[ColorSpaceType]] = [
@@ -33,11 +34,16 @@ class CMapFile:
     def save(self: Self, path: Path) -> None:
         imageFiles: list[str] = []
         for image in self._images:
-            imageFile: str = str(path / f'{uuid4()}.jpg')
+            # image.bits()
+            ptr = image.bits()
+            ptr.setsize(image.sizeInBytes())
+            
+            imageFile: str = str(path.parent / f'{md5(ptr.asstring()).hexdigest()}.jpg')
+            print(imageFile)
             image.save(imageFile)
             imageFiles.append(imageFile)
 
-        (path / 'cmap.toml').write_text(dumps({
+        path.write_text(dumps({
             'images': imageFiles,
             'gradients': list(map(
                 lambda gradient: gradient.toDict(),
@@ -53,15 +59,16 @@ class CMapFile:
         }, pretty=True))
 
     def load(self: Self, path: Path) -> None:
-        if path.is_file():
-            path = path.parent
-
-        info = loads((path / 'cmap.toml').read_text())
+        info = loads(path.read_text())
         self._images = list(map(
-            lambda imageFile: QImage(str(path / imageFile)),
+            lambda imageFile: QImage(str(path.parent / imageFile)),
             info['images'],
         ))
         self._gradients = list(map(
             lambda gradientInfo: ColorGradient.fromDict(gradientInfo),
             info['gradients'],
+        ))
+        self._previewColorSpaces = list(map(
+            lambda previewInfo: [previewInfo['weight'], previewInfo['mix']],
+            info['preview_color_spaces'],
         ))

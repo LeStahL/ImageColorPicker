@@ -28,10 +28,14 @@ from .ui_mainwindow import Ui_MainWindow
 from PyQt6.QtCore import (
     pyqtSignal,
     Qt,
+    QPointF,
 )
 from PyQt6.QtWidgets import (
     QWidget,
     QMainWindow,
+    QLabel,
+    QMessageBox,
+    QApplication,
 )
 from PyQt6.QtGui import (
     QIcon,
@@ -61,25 +65,18 @@ class MainWindow(QMainWindow):
 
         self.setWindowIcon(QIcon(str(files(imagecolorpicker) / 'team210.ico')))
 
-    #     self.toolBar: QToolBar
-
-    #     self.coordinateLabel = QLabel(self)
-    #     self.coordinateLabel.setText("Coordinates: ")
-    #     self.toolBar.addWidget(self.coordinateLabel)
-
-    #     self.coordinateDropdown = QComboBox(self)
-    #     for coordinateType in CoordinateType:
-    #         self.coordinateDropdown.addItem(coordinateType.name, coordinateType)
-    #     self.toolBar.addWidget(self.coordinateDropdown)
-
-    #     self.picker: PickableColorLabel
-    #     self.picker.hovered.connect(lambda cursor: self.statusBar().showMessage('Position: x = {}, y = {}'.format(*self._coordinates(cursor.x(), cursor.y()))))
-    #     self.picker.picked.connect(self._updatePickInformation)
+        self._coordinateType: CoordinateType = CoordinateType.AspectCorrectedBottomUp
+        self._ui.actionAspect_Corrected_Top_Down.triggered.connect(lambda: self._updateCoordinateType(CoordinateType.AspectCorrectedBottomUp))
+        self._ui.actionNormalized_Bottom_Up.triggered.connect(lambda: self._updateCoordinateType(CoordinateType.NormalizedBottomUp))
+        self._ui.actionNormalized_Top_Down.triggered.connect(lambda: self._updateCoordinateType(CoordinateType.NormalizedTopDown))
+ 
+        self._ui.picker.hovered.connect(lambda cursor: self.statusBar().showMessage('Position: x = {}, y = {}'.format(*self._coordinates(cursor.x(), cursor.y()))))
+        self._ui.picker.picked.connect(self._updatePickInformation)
     #     self.actionOpen.triggered.connect(self.open)
-    #     self.actionQuit.triggered.connect(self.quit)
+        self._ui.actionQuit.triggered.connect(lambda: QApplication.exit(0))
     #     self.actionCopy.triggered.connect(self.copy)
     #     self.actionPaste.triggered.connect(self.paste)
-    #     self.actionAbout.triggered.connect(self.about)
+        self._ui.actionAbout.triggered.connect(self.about)
     #     self.actionExport_Palette.triggered.connect(self.exportPalette)
     #     self.actionImport_Palette.triggered.connect(self.importPalette)
     #     self.gradientEditor: GradientEditor
@@ -160,13 +157,18 @@ class MainWindow(QMainWindow):
     #     self.actionExtract_Palette: QAction
     #     self.actionExtract_Palette.triggered.connect(self.extractPalette)
 
-    #     self.actionForce_16_9_View: QAction
-    #     self.actionForce_16_9_View.triggered.connect(self._force16_9View)
+        self._ui.actionForce_16_9_View.triggered.connect(self._force16_9View)
 
-    # def _force16_9View(self: Self) -> None:
-    #     w = self.picker.width()
-    #     h = int(9. / 16. * w)
-    #     self.picker.resize(w, h)
+    def _updateCoordinateType(self: Self, coordinateType: CoordinateType) -> None:
+        self._coordinateType = coordinateType
+        self._ui.actionAspect_Corrected_Top_Down.setChecked(coordinateType == CoordinateType.AspectCorrectedBottomUp)
+        self._ui.actionNormalized_Bottom_Up.setChecked(coordinateType == CoordinateType.NormalizedBottomUp)
+        self._ui.actionNormalized_Top_Down.setChecked(coordinateType == CoordinateType.NormalizedTopDown)
+
+    def _force16_9View(self: Self) -> None:
+        w = self._ui.picker.width()
+        h = int(9. / 16. * w)
+        self._ui.picker.resize(w, h)
 
     # def extractPalette(self: Self) -> None:
     #     with TemporaryDirectory() as directory:
@@ -192,15 +194,15 @@ class MainWindow(QMainWindow):
     #             self.gradientEditor._allColorMaps = index.model()._allColorMaps
     #             self.gradientEditor.gradientPreview.changeColorMaps(index.model()._allColorMaps)
 
-    # def _coordinates(self: Self, qtX: float, qtY: float) -> tuple[float, float]:
-    #     if self.coordinateDropdown.currentData() == CoordinateType.NormalizedTopDown:
-    #         return qtX, qtY
-    #     qtY = 1. - qtY
-    #     if self.coordinateDropdown.currentData() == CoordinateType.NormalizedBottomUp:
-    #         return qtX, qtY
-    #     width: int = self.picker.rect().width()
-    #     height: int = self.picker.rect().height()
-    #     return (qtX - .5) * width / height, (qtY - .5) * height / height
+    def _coordinates(self: Self, qtX: float, qtY: float) -> tuple[float, float]:
+        if self._coordinateType == CoordinateType.NormalizedTopDown:
+            return qtX, qtY
+        qtY = 1. - qtY
+        if self._coordinateType == CoordinateType.NormalizedBottomUp:
+            return qtX, qtY
+        width: int = self._ui.picker.rect().width()
+        height: int = self._ui.picker.rect().height()
+        return (qtX - .5) * width / height, (qtY - .5) * height / height
 
     # def degreeChanged(self: Self, value: int) -> None:
     #     ColorGradient.Degree = value
@@ -213,8 +215,8 @@ class MainWindow(QMainWindow):
     #     if Qt.ItemDataRole.EditRole in roles:
     #         self.colorLabel.setStyleSheet('background-color:{}'.format(topLeft.model()._color.name()))
 
-    # def _updatePickInformation(self: Self, cursor: QPointF, color: QColor) -> None:
-    #     self.colorLabel.setStyleSheet('background-color:{}'.format(color.name()))
+    def _updatePickInformation(self: Self, cursor: QPointF, color: QColor) -> None:
+        self._ui.colorLabel.setStyleSheet('background-color:{}'.format(color.name()))
 
     # def open(self: Self) -> None:
     #     filename, _ = QFileDialog.getOpenFileName(
@@ -320,13 +322,13 @@ class MainWindow(QMainWindow):
     #         url: QUrl = clipboard.mimeData().urls()[0]
     #         self.picker.loadFromUrl(url)
 
-    # def about(self: Self) -> None:
-    #     aboutMessage = QMessageBox()
-    #     aboutMessage.setWindowIcon(QIcon(join(dirname(__file__), MainWindow.IconFile)))
-    #     aboutMessage.setText("Image Color Picker is GPLv3 and (c) 2023 Alexander Kraus <nr4@z10.info>.")
-    #     aboutMessage.setWindowTitle("About Image Color Picker")
-    #     aboutMessage.setIcon(QMessageBox.Icon.Information)
-    #     aboutMessage.exec()
+    def about(self: Self) -> None:
+        aboutMessage = QMessageBox()
+        aboutMessage.setWindowIcon(QIcon(str(files(imagecolorpicker) / 'team210.ico')))
+        aboutMessage.setText("Image Color Picker is GPLv3 and (c) 2023 Alexander Kraus <nr4@z10.info>.")
+        aboutMessage.setWindowTitle("About Image Color Picker")
+        aboutMessage.setIcon(QMessageBox.Icon.Information)
+        aboutMessage.exec()
 
     # def updateGradientViewWithColor(self: Self, index: QModelIndex) -> None:
     #     index.model().setData(index, self.picker._color, Qt.ItemDataRole.EditRole)

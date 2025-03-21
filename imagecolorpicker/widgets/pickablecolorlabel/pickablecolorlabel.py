@@ -18,6 +18,8 @@ from requests import get
 from imagecolorpicker.widgets import pickablecolorlabel
 
 class PickableColorLabel(QWidget):
+    imageChanged: pyqtSignal = pyqtSignal(QImage)
+
     DefaultImage = 'default.png'
     CursorSize = 0.05
 
@@ -139,8 +141,10 @@ class PickableColorLabel(QWidget):
 
         if a0.mimeData().hasImage():
             self.setImage(a0.mimeData().imageData())
+            self.imageChanged.emit(self._image)
         elif a0.mimeData().hasHtml():
             self.loadFromHTML(a0.mimeData().html())
+            self.imageChanged.emit(self._image)
         elif a0.mimeData().hasUrls():
             if len(a0.mimeData().urls()) == 0:
                 return
@@ -148,6 +152,7 @@ class PickableColorLabel(QWidget):
             # Only load first URL.
             url: QUrl = a0.mimeData().urls()[0]
             self.loadFromUrl(url)
+            self.imageChanged.emit(self._image)
 
     def loadFromUrl(self: Self, url: QUrl) -> None:
         request: QNetworkRequest = QNetworkRequest(url)

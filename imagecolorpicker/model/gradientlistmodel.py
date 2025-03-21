@@ -34,6 +34,8 @@ from ..colorgradient import (
 from sys import argv
 from ..delegate.gradientlistdelegate import GradientListDelegate
 from .gradientlistcolumntype import GradientListColumnType
+from copy import deepcopy
+from ..colorspace import ColorSpaceType
 
 
 class GradientListModel(QAbstractTableModel):
@@ -172,6 +174,22 @@ class GradientListModel(QAbstractTableModel):
         self.dataChanged.emit(self.index(oldIndex, 0), self.index(oldIndex, self.columnCount()), [Qt.ItemDataRole.EditRole])
         self.dataChanged.emit(self.index(newIndex, 0), self.index(newIndex, self.columnCount()), [Qt.ItemDataRole.EditRole])
         self.currentGradientChanged.emit(self._gradientList[self._currentIndex])
+
+    def updateCurrentGradient(self: Self) -> None:
+        self._gradientList[self._currentIndex]._update()
+        self.dataChanged.emit(
+            self.index(self._currentIndex, 0),
+            self.index(self._currentIndex, self.columnCount()),
+            [Qt.ItemDataRole.DisplayRole],
+        )
+
+    def copyCurrentGradientWithColorSpaces(self: Self, weightColorSpace: ColorSpaceType, mixColorSpace: ColorSpaceType) -> ColorGradient:
+        result: ColorGradient = deepcopy(self._gradientList[self._currentIndex])
+        result._weightColorSpace = weightColorSpace
+        result._mixColorSpace = mixColorSpace
+        result._name = f'{weightColorSpace.name}:{mixColorSpace.name}'
+        result._update()
+        return result
 
 if __name__ == '__main__':
     app = QApplication(argv)

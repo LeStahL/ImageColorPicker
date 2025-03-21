@@ -38,9 +38,11 @@ class GradientListDelegate(QStyledItemDelegate):
         index: QModelIndex,
     ) -> None:
         if index.model()._columnList[index.column()] == GradientListColumnType.Preview:
-            self._gradientPreview: GradientWidget = GradientWidget(index.data())
-            self._gradientPreview.paint(option.rect, painter)
-            return
+            data: Optional[ColorGradient] = index.data()
+            if data is not None:
+                self._gradientPreview: GradientWidget = GradientWidget(data)
+                self._gradientPreview.paint(option.rect, painter)
+                return
         return super().paint(painter, option, index)
 
     def createEditor(
