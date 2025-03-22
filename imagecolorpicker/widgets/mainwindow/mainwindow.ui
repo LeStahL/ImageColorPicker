@@ -91,8 +91,24 @@
     <addaction name="actionForce_16_9_View"/>
     <addaction name="menuCoordinates"/>
    </widget>
+   <widget class="QMenu" name="menuGradient">
+    <property name="title">
+     <string>Gradient</string>
+    </property>
+    <addaction name="actionAdd_Gradient"/>
+    <addaction name="actionRemove_Current_Gradient"/>
+   </widget>
+   <widget class="QMenu" name="menuColor">
+    <property name="title">
+     <string>Color</string>
+    </property>
+    <addaction name="actionAdd_Color"/>
+    <addaction name="actionRemove_Color"/>
+   </widget>
    <addaction name="menuFile"/>
    <addaction name="menuEdit"/>
+   <addaction name="menuGradient"/>
+   <addaction name="menuColor"/>
    <addaction name="menuView"/>
    <addaction name="menu"/>
   </widget>
@@ -337,21 +353,6 @@
     <string>About</string>
    </property>
   </action>
-  <action name="actionPrepend">
-   <property name="text">
-    <string>Prepend</string>
-   </property>
-  </action>
-  <action name="actionAppend">
-   <property name="text">
-    <string>Append</string>
-   </property>
-  </action>
-  <action name="actionUpdate_selected">
-   <property name="text">
-    <string>Update selected</string>
-   </property>
-  </action>
   <action name="actionExtract_Palette">
    <property name="text">
     <string>Extract Palette</string>
@@ -405,6 +406,26 @@
    </property>
    <property name="shortcut">
     <string>Ctrl+S</string>
+   </property>
+  </action>
+  <action name="actionAdd_Gradient">
+   <property name="text">
+    <string>Add Gradient</string>
+   </property>
+  </action>
+  <action name="actionRemove_Current_Gradient">
+   <property name="text">
+    <string>Remove Current Gradient</string>
+   </property>
+  </action>
+  <action name="actionAdd_Color">
+   <property name="text">
+    <string>Add Color</string>
+   </property>
+  </action>
+  <action name="actionRemove_Color">
+   <property name="text">
+    <string>Remove Color</string>
    </property>
   </action>
  </widget>

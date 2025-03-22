@@ -16,9 +16,10 @@ from PyQt6.QtCore import QByteArray
 class CMapFile:
     DefaultPreviewColorSpaces: list[list[ColorSpaceType]] = [
         [ColorSpaceType.SRGB, ColorSpaceType.SRGB],
-        [ColorSpaceType.RGB, ColorSpaceType.RGB],
         [ColorSpaceType.OKLAB, ColorSpaceType.OKLAB],
         [ColorSpaceType.CIELAB, ColorSpaceType.CIELAB],
+        [ColorSpaceType.ACESAP1, ColorSpaceType.ACESAP1],
+        [ColorSpaceType.HunterLCH, ColorSpaceType.HunterLCH],
     ]
 
     def __init__(

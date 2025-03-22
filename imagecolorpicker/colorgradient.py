@@ -279,7 +279,7 @@ class ColorGradient:
         amount: int = 256,
     ) -> List[vec3]:
         t = linspace(0., 1., amount)
-        sampledColors: List[Color] = list(map(
+        sampledColors: List[vec3] = list(map(
             lambda _amount: self.evaluate(_amount),
             t,
         ))

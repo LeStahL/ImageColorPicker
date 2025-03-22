@@ -46,6 +46,11 @@ from .model.gradientpropertycolumntype import GradientPropertyColumnType
 from .widgets.gradientwidget import gradientwidget
 from .model.gradientcolormodel import GradientColorModel
 from .delegate.gradientcolordelegate import GradientColorDelegate
+from copy import deepcopy
+from glm import vec3
+from uuid import uuid4
+from .colorspace import ColorSpaceType, ColorSpace
+from random import uniform
 
 class Controller:
     def __init__(
@@ -116,6 +121,54 @@ class Controller:
         self._mainWindow._ui.actionOpen.triggered.connect(self._openFile)
         self._mainWindow._ui.actionSave.triggered.connect(self._saveFile)
 
+        self._mainWindow._ui.actionAdd_Gradient.triggered.connect(self._addGradient)
+        self._mainWindow._ui.actionRemove_Current_Gradient.triggered.connect(self._removeCurrentGradient)
+
+        self._mainWindow._ui.actionAdd_Color.triggered.connect(self._addColor)
+        self._mainWindow._ui.actionRemove_Color.triggered.connect(self._removeColor)
+
+        self.updateFromCmapFile()
+
+    def _removeColor(self: Self) -> None:
+        if len(self._cmapFile._gradients[self._gradientListModel._currentIndex]._colors) <= 1:
+            return
+        del self._cmapFile._gradients[self._gradientListModel._currentIndex]._colors[-1]
+        index = min(
+            self._gradientListModel._currentIndex,
+            len(self._cmapFile._gradients[self._gradientListModel._currentIndex]._colors) - 1,
+        )
+        self.updateFromCmapFile()
+        self._gradientListModel.changeCurrent(index)
+
+    def _addColor(self: Self) -> None:
+        self._cmapFile._gradients[self._gradientListModel._currentIndex]._colors.append(vec3(1,1,1))
+        index = self._gradientListModel._currentIndex
+        self.updateFromCmapFile()
+        self._gradientListModel.changeCurrent(index)
+
+    def _addGradient(self: Self) -> None:
+        self._cmapFile._gradients.append(ColorGradient(
+            str(uuid4()),
+            7,
+            ColorSpaceType.CIELAB,
+            ColorSpaceType.CIELAB,
+            [
+                vec3(uniform(0,.1), uniform(0,.1), uniform(0,.1)),
+            ] + ColorSpace.SortByCIEH([
+                vec3(uniform(0,1), uniform(0,1), uniform(0,1)),
+                vec3(uniform(0,1), uniform(0,1), uniform(0,1)),
+                vec3(uniform(0,1), uniform(0,1), uniform(0,1)),
+                vec3(uniform(0,1), uniform(0,1), uniform(0,1)),
+                vec3(uniform(0,1), uniform(0,1), uniform(0,1)),
+                vec3(uniform(0,1), uniform(0,1), uniform(0,1)),
+                vec3(uniform(0,1), uniform(0,1), uniform(0,1)),
+            ]),
+        ))
+        self.updateFromCmapFile()
+        self._gradientListModel.changeCurrent(len(self._cmapFile._gradients) - 1)
+
+    def _removeCurrentGradient(self: Self) -> None:
+        del self._cmapFile._gradients[self._gradientListModel._currentIndex]
         self.updateFromCmapFile()
 
     def updateFromCmapFile(
@@ -123,11 +176,16 @@ class Controller:
     ) -> None:
         self._gradientListModel.loadGradientList(self._cmapFile._gradients)
         self._imageListModel.loadImageList(self._cmapFile._images)
+        self._updateGradientPreview()
+        self._gradientPropertyModel.loadGradient(self._cmapFile._gradients[self._gradientListModel._currentIndex])
 
     def _gradientListContextMenuRequested(self: Self, position: QPoint) -> None:
         index: QModelIndex = self._mainWindow._ui.gradientTableView.indexAt(position)
         if index.isValid():
             self._gradientListModel.changeCurrent(index.row())
+        else:
+            self._mainWindow._ui.menuGradient.move(self._mainWindow._ui.gradientTableView.mapToGlobal(position))
+            self._mainWindow._ui.menuGradient.show()
 
     def _colorTableContextMenuRequested(self: Self, position: QPoint) -> None:
         index: QModelIndex = self._mainWindow._ui.gradientColorTableView.indexAt(position)

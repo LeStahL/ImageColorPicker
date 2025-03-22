@@ -612,9 +612,29 @@ class ColorSpace:
             # print("Applying", transform)
             result = transform(result, *parameters)
         return result
+    
+    @staticmethod
+    def SortByCIEH(colors: list[vec3], colorSpace: ColorSpaceType = ColorSpaceType.RGB):
+        converted = list(map(
+            lambda color: ColorSpace.convert(
+                color,
+                colorSpace,
+                ColorSpaceType.CIELCH,
+                observer=Observer.TwoDegreesCIE1931,
+                illuminant=Illuminant.D65,
+            ),
+            colors,
+        ))
+        indices = sorted(
+            range(len(colors)),
+            key=lambda index: converted[index].z,
+        )
+        return list(map(
+            lambda index: colors[index],
+            indices,
+        ))
 
 if __name__ == '__main__':
-    # print("test")
     from matplotlib import pyplot
     labeldict = {}
     for colorSpaceType in ColorSpaceType:

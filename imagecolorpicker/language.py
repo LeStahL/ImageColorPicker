@@ -9,3 +9,4 @@ class Language(IntEnum):
     Python = auto()
     NASM = auto()
     C = auto()
+    CablesJSON = auto()
