@@ -257,10 +257,9 @@ class ColorGradient:
     
     def nearestWeightInColorMap(
         self: Self,
-        colorMap: List[vec3],
         c0: vec3,
     ) -> float:
-        costFunction: partial = partial(ColorGradient.colorMapDistance, colorMap=colorMap, c0=c0)
+        costFunction: partial = partial(ColorGradient.colorMapDistance, colorMap=self._coefficients, c0=c0)
         return minimize(costFunction, .5, method='Nelder-Mead').x[0]
 
     @staticmethod
@@ -268,7 +267,7 @@ class ColorGradient:
         red = [color.r for color in colorMap]
         green = [color.g for color in colorMap]
         blue = [color.b for color in colorMap]
-        
+        t = fract(t)
         return length(vec3(
             ColorGradient.polynomial(t, *red),
             ColorGradient.polynomial(t, *green),
@@ -393,7 +392,7 @@ class ColorGradient:
             range(len(result)),
         ))) + ","
 
-    def evaluateFit(self: Self, t: float, fit: List[vec3]) -> vec3:
+    def evaluateFit(self: Self, t: float) -> vec3:
         model: Callable
         if self._model == FitModel.HornerPolynomial:
             model = OptimizationModel.Polynomial
@@ -405,15 +404,15 @@ class ColorGradient:
         return vec3(
             model(t, *list(map(
                 lambda fitelement: fitelement.x,
-                fit,
+                self._coefficients,
             ))),
             model(t, *list(map(
                 lambda fitelement: fitelement.y,
-                fit,
+                self._coefficients,
             ))),
             model(t, *list(map(
                 lambda fitelement: fitelement.z,
-                fit,
+                self._coefficients,
             ))),
         )
 
@@ -422,11 +421,10 @@ class ColorGradient:
         weight: GradientWeight,
         mix: GradientMix,
     ) -> str:
-        fitresult: List[vec3] = self.fit(256, weight, mix)
         amounts: List[float] = list(map(float,range(101)))
 
         newcolors = list(map(
-            lambda amount: self.evaluateFit(float(amount) / 100., fitresult),
+            lambda amount: self.evaluateFit(float(amount) / 100.),
             amounts,
         ))
 
@@ -450,7 +448,6 @@ class ColorGradient:
                 *self.evaluateFit(
                     # This is the amount here.
                     float(stopIndex) / 100.,
-                    self.coefficients,
                 ),
             ),
             stopIndices,
@@ -469,11 +466,10 @@ class ColorGradient:
         weight: GradientWeight,
         mix: GradientMix,
     ) -> str:
-        fitresult: List[vec3] = self.fit(256, weight, mix)
         amounts: List[float] = list(map(float,range(101)))
 
         newcolors = list(map(
-            lambda amount: self.evaluateFit(float(amount) / 100., fitresult),
+            lambda amount: self.evaluateFit(float(amount) / 100.),
             amounts,
         ))
 
