@@ -615,6 +615,9 @@ class ColorSpace:
     
     @staticmethod
     def SortByCIEH(colors: list[vec3], colorSpace: ColorSpaceType = ColorSpaceType.RGB):
+        first = sorted(colors, key=lambda color: length(color))[0]
+        # first = colors[0]
+        # colors = colors[1:]
         converted = list(map(
             lambda color: ColorSpace.convert(
                 color,
@@ -629,10 +632,13 @@ class ColorSpace:
             range(len(colors)),
             key=lambda index: converted[index].z,
         )
-        return list(map(
+        result = list(map(
             lambda index: colors[index],
             indices,
         ))
+        while result[0] != first:
+            result = result[1:] + [result[0]]
+        return result
 
 if __name__ == '__main__':
     from matplotlib import pyplot

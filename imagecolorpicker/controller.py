@@ -51,6 +51,9 @@ from glm import vec3
 from uuid import uuid4
 from .colorspace import ColorSpaceType, ColorSpace
 from random import uniform
+from tempfile import TemporaryDirectory
+from Pylette import extract_colors
+
 
 class Controller:
     def __init__(
@@ -127,6 +130,8 @@ class Controller:
         self._mainWindow._ui.actionAdd_Color.triggered.connect(self._addColor)
         self._mainWindow._ui.actionRemove_Color.triggered.connect(self._removeColor)
 
+        self._mainWindow._ui.actionExtract_Palette.triggered.connect(self.extractPalette)
+
         self.updateFromCmapFile()
 
     def _removeColor(self: Self) -> None:
@@ -152,9 +157,8 @@ class Controller:
             7,
             ColorSpaceType.CIELAB,
             ColorSpaceType.CIELAB,
-            [
+            ColorSpace.SortByCIEH([
                 vec3(uniform(0,.1), uniform(0,.1), uniform(0,.1)),
-            ] + ColorSpace.SortByCIEH([
                 vec3(uniform(0,1), uniform(0,1), uniform(0,1)),
                 vec3(uniform(0,1), uniform(0,1), uniform(0,1)),
                 vec3(uniform(0,1), uniform(0,1), uniform(0,1)),
@@ -266,6 +270,28 @@ class Controller:
         settings.setValue("save_path", file_info.absoluteDir().absolutePath())
 
         self._cmapFile.save(Path(filename))
+
+    def extractPalette(self: Self) -> None:
+        with TemporaryDirectory() as directory:
+            imagePath: Path = Path(directory) / 'image.jpg'
+            self._mainWindow._ui.picker._image.save(str(imagePath))
+            palette = extract_colors(
+                image=str(Path(directory) / 'image.jpg'),
+                palette_size=len(self._cmapFile._gradients[self._gradientListModel._currentIndex]._colors),
+                resize=False,
+                # mode='MC',
+                mode='KM',
+                sort_mode='luminance',
+            )
+            palette = list(map(
+                lambda color: vec3(*color.rgb) / 255.,
+                palette,
+            ))
+            palette = ColorSpace.SortByCIEH(palette)
+            self._cmapFile._gradients[self._gradientListModel._currentIndex]._colors = palette
+            index = self._gradientListModel._currentIndex
+            self.updateFromCmapFile()
+            self._gradientListModel.changeCurrent(index)
 
     def startApplication(
         self: Self,
