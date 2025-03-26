@@ -1,12 +1,3 @@
-# from typing import *
-# from PyQt6.QtCore import *
-# from PyQt6.QtWidgets import *
-# from PyQt6.QtGui import *
-# from PyQt6.uic import loadUi
-# from os.path import (
-#     join,
-#     dirname,
-# )
 from sys import exit
 from imagecolorpicker.colorgradient import *
 # from imagecolorpicker.pickablecolorlabel import PickableColorLabel
@@ -170,30 +161,6 @@ class MainWindow(QMainWindow):
         h = int(9. / 16. * w)
         self._ui.picker.resize(w, h)
 
-    # def extractPalette(self: Self) -> None:
-    #     with TemporaryDirectory() as directory:
-    #         imagePath: Path = Path(directory) / 'image.jpg'
-    #         self.picker._image.save(str(imagePath))
-    #         palette = extract_colors(
-    #             image=str(Path(directory) / 'image.jpg'),
-    #             palette_size=int(self.colorCountSpinBox.value()),
-    #             resize=False,
-    #             # mode='MC',
-    #             mode='KM',
-    #             sort_mode='luminance',
-    #         )
-    #         palette = list(map(
-    #             lambda color: QColor.fromRgb(*color.rgb),
-    #             palette,
-    #         ))
-    #         palette = list(sorted(palette, key=lambda color: color.hue()))
-    #         for colorIndex in range(int(self.colorCountSpinBox.value())):
-    #             index = self.gradientEditor._gradientModel.index(colorIndex, 0)
-    #             self.gradientEditor._gradientModel.setData(index, palette[colorIndex])
-    #             self.gradientEditor._gradient = index.model()._gradient
-    #             self.gradientEditor._allColorMaps = index.model()._allColorMaps
-    #             self.gradientEditor.gradientPreview.changeColorMaps(index.model()._allColorMaps)
-
     def _coordinates(self: Self, qtX: float, qtY: float) -> tuple[float, float]:
         if self._coordinateType == CoordinateType.NormalizedTopDown:
             return qtX, qtY
@@ -204,36 +171,8 @@ class MainWindow(QMainWindow):
         height: int = self._ui.picker.rect().height()
         return (qtX - .5) * width / height, (qtY - .5) * height / height
 
-    # def degreeChanged(self: Self, value: int) -> None:
-    #     ColorGradient.Degree = value
-    #     self.gradientEditor._gradientModel.reload()
-        
-    # def colorCountChanged(self: Self, value: int) -> None:
-    #     self.gradientEditor._gradientModel.setColorCount(value)
-
-    # def representationChanged(self: Self, topLeft: QModelIndex, bottomRight: QModelIndex, roles: List[Qt.ItemDataRole]) -> None:
-    #     if Qt.ItemDataRole.EditRole in roles:
-    #         self.colorLabel.setStyleSheet('background-color:{}'.format(topLeft.model()._color.name()))
-
     def _updatePickInformation(self: Self, cursor: QPointF, color: QColor) -> None:
         self._ui.colorLabel.setStyleSheet('background-color:{}'.format(color.name()))
-
-    # def open(self: Self) -> None:
-    #     filename, _ = QFileDialog.getOpenFileName(
-    #         None,
-    #         'Open image...',
-    #         QDir.homePath(),
-    #         'All Files (*.*)',
-    #     )
-
-    #     if filename == "":
-    #         return
-        
-    #     self.picker.setImage(QImage(filename))
-    #     self.setWindowTitle('Image Color Picker by Team210 - {}'.format(filename))
-
-    # def quit(self: Self) -> None:
-    #     exit(0)
 
     # def copy(self: Self) -> None:
     #     clipboard = QGuiApplication.clipboard()
@@ -329,73 +268,3 @@ class MainWindow(QMainWindow):
         aboutMessage.setWindowTitle("About Image Color Picker")
         aboutMessage.setIcon(QMessageBox.Icon.Information)
         aboutMessage.exec()
-
-    # def updateGradientViewWithColor(self: Self, index: QModelIndex) -> None:
-    #     index.model().setData(index, self.picker._color, Qt.ItemDataRole.EditRole)
-    #     self.gradientEditor._gradient = index.model()._gradient
-    #     self.gradientEditor._allColorMaps = index.model()._allColorMaps
-    #     self.gradientEditor.gradientPreview.changeColorMaps(index.model()._allColorMaps)
-
-    # def exportPalette(self: Self) -> None:
-    #     settings = QSettings()
-    #     filename, _ = QFileDialog.getSaveFileName(
-    #         None,
-    #         'Save palette...',
-    #         settings.value("save_palette_path", QDir.homePath()),
-    #         "All Supported Files (*.toml);;TOML project files (*.toml)",
-    #     )
-
-    #     if filename == "":
-    #         return
-
-    #     if len(Path(filename).suffixes) == 0:
-    #         filename += '.toml'
-
-    #     file_info = QFileInfo(filename)
-    #     settings.setValue("save_palette_path", file_info.absoluteDir().absolutePath())
-    #     suffix: str = Path(filename).suffix
-        
-    #     if suffix == '.toml':
-    #         Path(filename).write_text(rtoml.dumps({
-    #             'palette': {
-    #                 'name': self.slugLineEdit.text(),
-    #                 'colors': list(map(
-    #                     lambda color: color.toList(),
-    #                     self.gradientEditor._gradient._colors,
-    #                 )),
-    #             },
-    #         }, pretty=True))
-
-    # def importPalette(self: Self) -> None:
-    #     settings = QSettings()
-    #     filename, _ = QFileDialog.getOpenFileName(
-    #         None,
-    #         'Load palette...',
-    #         settings.value("load_palette_path", QDir.homePath()),
-    #         "All Supported Files (*.toml);;TOML project files (*.toml)",
-    #     )
-
-    #     if filename == "":
-    #         return
-
-    #     if len(Path(filename).suffixes) == 0:
-    #         filename += '.toml'
-
-    #     file_info = QFileInfo(filename)
-    #     settings.setValue("load_palette_path", file_info.absoluteDir().absolutePath())
-    #     suffix: str = Path(filename).suffix
-        
-    #     if suffix == '.toml':
-    #         paletteObject: Dict = rtoml.loads(Path(filename).read_text())
-    #         self.colorCountSpinBox.setValue(len(paletteObject['palette']['colors']))
-    #         gradient: ColorGradient = ColorGradient(*tuple(map(
-    #             lambda colorList: Color(*colorList),
-    #             paletteObject['palette']['colors'],
-    #         )))
-    #         allColorMaps: List[Tuple[GradientWeight, GradientMix, List[vec3]]] = gradient.allColorMaps()
-    #         self.gradientEditor._gradientModel.load(allColorMaps, gradient)
-    #         self.gradientEditor._gradient = gradient
-    #         self.gradientEditor._allColorMaps = allColorMaps
-    #         self.gradientEditor._gradientModel.reload()
-    #         self.gradientEditor.gradientPreview.changeColorMaps(allColorMaps)
-    #         self.update()

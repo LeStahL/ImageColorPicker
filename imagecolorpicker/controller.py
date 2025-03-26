@@ -5,11 +5,13 @@ from typing import (
 from PyQt6.QtWidgets import (
     QApplication,
     QFileDialog,
+    QMenu,
 )
 from PyQt6.QtGui import (
     QIcon,
     QColor,
     QImage,
+    QAction,
 )
 from PyQt6.QtCore import (
     QModelIndex,
@@ -53,6 +55,9 @@ from .colorspace import ColorSpaceType, ColorSpace
 from random import uniform
 from tempfile import TemporaryDirectory
 from Pylette import extract_colors
+from rtoml import loads, dumps
+from .language import Language
+from .representation import Representation
 
 
 class Controller:
@@ -132,7 +137,90 @@ class Controller:
 
         self._mainWindow._ui.actionExtract_Palette.triggered.connect(self.extractPalette)
 
+        self._mainWindow._ui.actionImport_Palette.triggered.connect(self._importPalette)
+        self._mainWindow._ui.actionExport_Palette.triggered.connect(self._exportPalette)
+
+        self._mainWindow._ui.actionCopy.triggered.connect(self._copy)
+
+        self._copyLanguage: Language = Language.GLSL
+        self._copyRepresentation: Representation = Representation.ColorMap
+
+        self._mainWindow._ui.actionColor_Map.triggered.connect(lambda: self._changeLanguageRepresentation(
+            self._mainWindow._ui.actionColor_Map,
+            Language.GLSL,
+            Representation.ColorMap,
+        ))
+        self._mainWindow._ui.action3_Component_Color.triggered.connect(lambda: self._changeLanguageRepresentation(
+            self._mainWindow._ui.action3_Component_Color,
+            Language.GLSL,
+            Representation.Color3,
+        ))
+
         self.updateFromCmapFile()
+
+    def _changeLanguageRepresentation(self: Self, sender: QAction, language: Language, representation: Representation) -> None:
+        for 
+        self._copyLanguage = language
+        self._copyRepresentation = representation
+
+    def _exportPalette(self: Self) -> None:
+        settings = QSettings()
+        filename, _ = QFileDialog.getSaveFileName(
+            None,
+            'Save palette...',
+            settings.value("save_palette_path", QDir.homePath()),
+            "All Supported Files (*.toml);;TOML project files (*.toml)",
+        )
+
+        if filename == "":
+            return
+
+        if len(Path(filename).suffixes) == 0:
+            filename += '.toml'
+
+        file_info = QFileInfo(filename)
+        settings.setValue("save_palette_path", file_info.absoluteDir().absolutePath())
+        suffix: str = Path(filename).suffix
+        
+        if suffix == '.toml':
+            Path(filename).write_text(dumps({
+                'palette': {
+                    'name': self._cmapFile._gradients[self._gradientListModel._currentIndex]._name,
+                    'colors': list(map(
+                        lambda color: [color.x, color.y, color.z],
+                        self._cmapFile._gradients[self._gradientListModel._currentIndex]._colors,
+                    )),
+                },
+            }, pretty=True))
+
+    def _importPalette(self: Self) -> None:
+        settings = QSettings()
+        filename, _ = QFileDialog.getOpenFileName(
+            None,
+            'Load palette...',
+            settings.value("load_palette_path", QDir.homePath()),
+            "All Supported Files (*.toml);;TOML project files (*.toml)",
+        )
+
+        if filename == "":
+            return
+
+        if len(Path(filename).suffixes) == 0:
+            filename += '.toml'
+
+        file_info = QFileInfo(filename)
+        settings.setValue("load_palette_path", file_info.absoluteDir().absolutePath())
+        suffix: str = Path(filename).suffix
+        
+        if suffix == '.toml':
+            paletteObject: dict = loads(Path(filename).read_text())
+            self._cmapFile._gradients[self._gradientListModel._currentIndex]._colors = ColorSpace.SortByCIEH(list(map(
+                lambda colorList: vec3(*colorList),
+                paletteObject['palette']['colors'],
+            )))
+            index = self._gradientListModel._currentIndex
+            self.updateFromCmapFile()
+            self._gradientListModel.changeCurrent(index)
 
     def _removeColor(self: Self) -> None:
         if len(self._cmapFile._gradients[self._gradientListModel._currentIndex]._colors) <= 1:

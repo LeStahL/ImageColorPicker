@@ -428,6 +428,213 @@
     <string>Remove Color</string>
    </property>
   </action>
+  <action name="actionHLSL">
+   <property name="text">
+    <string>HLSL</string>
+   </property>
+  </action>
+  <action name="actionColor_Map">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Color Map</string>
+   </property>
+  </action>
+  <action name="action3_Component_Color">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>3-Component Color</string>
+   </property>
+  </action>
+  <action name="action4_Component_Color">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>4-Component Color</string>
+   </property>
+  </action>
+  <action name="actionNearest_Weight">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Nearest Weight</string>
+   </property>
+  </action>
+  <action name="actionColors">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Colors</string>
+   </property>
+  </action>
+  <action name="actionWeights">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Weights</string>
+   </property>
+  </action>
+  <action name="actionColor_Maps">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Color Maps</string>
+   </property>
+  </action>
+  <action name="actionColorMap">
+   <property name="text">
+    <string>ColorMap</string>
+   </property>
+  </action>
+  <action name="actionColors_2">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Colors</string>
+   </property>
+  </action>
+  <action name="actionWeights_2">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Weights</string>
+   </property>
+  </action>
+  <action name="actionColorMaps">
+   <property name="text">
+    <string>ColorMaps</string>
+   </property>
+  </action>
+  <action name="actionColor_Maps_2">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Color Maps</string>
+   </property>
+  </action>
+  <action name="actionColor_Map_2">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Color Map</string>
+   </property>
+  </action>
+  <action name="actionColor_Map_3">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Color Map</string>
+   </property>
+  </action>
+  <action name="actionColors_3">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Colors</string>
+   </property>
+  </action>
+  <action name="actionWeights_3">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Weights</string>
+   </property>
+  </action>
+  <action name="actionColor_Maps_3">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Color Maps</string>
+   </property>
+  </action>
+  <action name="actionColor_Map_4">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Color Map</string>
+   </property>
+  </action>
+  <action name="action3_Component_Color_2">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>3-Component Color</string>
+   </property>
+  </action>
+  <action name="actionColor_Map_5">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Color Map</string>
+   </property>
+  </action>
+  <action name="action3_Component_Color_3">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>3-Component Color</string>
+   </property>
+  </action>
+  <action name="actionColor_Map_6">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Color Map</string>
+   </property>
+  </action>
+  <action name="actionColors_4">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Colors</string>
+   </property>
+  </action>
+  <action name="actionWeights_4">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Weights</string>
+   </property>
+  </action>
+  <action name="actionColor_Maps_4">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Color Maps</string>
+   </property>
+  </action>
+  <action name="actionColor_Map_7">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Color Map</string>
+   </property>
+  </action>
  </widget>
  <customwidgets>
   <customwidget>
