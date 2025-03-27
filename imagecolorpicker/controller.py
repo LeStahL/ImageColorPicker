@@ -12,6 +12,7 @@ from PyQt6.QtGui import (
     QColor,
     QImage,
     QAction,
+    QGuiApplication,
 )
 from PyQt6.QtCore import (
     QModelIndex,
@@ -58,6 +59,9 @@ from Pylette import extract_colors
 from rtoml import loads, dumps
 from .language import Language
 from .representation import Representation
+from .model.settingsmodel import SettingsModel
+from .delegate.settingsdelegate import SettingsDelegate
+from .export import Export
 
 
 class Controller:
@@ -142,26 +146,17 @@ class Controller:
 
         self._mainWindow._ui.actionCopy.triggered.connect(self._copy)
 
-        self._copyLanguage: Language = Language.GLSL
-        self._copyRepresentation: Representation = Representation.ColorMap
-
-        self._mainWindow._ui.actionColor_Map.triggered.connect(lambda: self._changeLanguageRepresentation(
-            self._mainWindow._ui.actionColor_Map,
-            Language.GLSL,
-            Representation.ColorMap,
-        ))
-        self._mainWindow._ui.action3_Component_Color.triggered.connect(lambda: self._changeLanguageRepresentation(
-            self._mainWindow._ui.action3_Component_Color,
-            Language.GLSL,
-            Representation.Color3,
-        ))
-
         self.updateFromCmapFile()
 
-    def _changeLanguageRepresentation(self: Self, sender: QAction, language: Language, representation: Representation) -> None:
-        for 
-        self._copyLanguage = language
-        self._copyRepresentation = representation
+        self._settingsModel: SettingsModel = SettingsModel()
+        self._mainWindow._ui.settingsTableView.setModel(self._settingsModel)
+
+        self._settingsDelegate: SettingsDelegate = SettingsDelegate()
+        self._mainWindow._ui.settingsTableView.setItemDelegate(self._settingsDelegate)
+
+    def _copy(self: Self) -> None:
+        clipboard = QGuiApplication.clipboard()
+        clipboard.setText(Export.Export(self._settingsModel.language, self._settingsModel.representation, self._gradientListModel._gradientList[self._gradientListModel._currentIndex], self._gradientListModel._gradientList, vec3(*self._mainWindow._ui.picker.components)))
 
     def _exportPalette(self: Self) -> None:
         settings = QSettings()
@@ -270,6 +265,7 @@ class Controller:
         self._imageListModel.loadImageList(self._cmapFile._images)
         self._updateGradientPreview()
         self._gradientPropertyModel.loadGradient(self._cmapFile._gradients[self._gradientListModel._currentIndex])
+        self._gradientColorModel.loadGradient(self._cmapFile._gradients[self._gradientListModel._currentIndex])
 
     def _gradientListContextMenuRequested(self: Self, position: QPoint) -> None:
         index: QModelIndex = self._mainWindow._ui.gradientTableView.indexAt(position)

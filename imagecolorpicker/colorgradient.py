@@ -15,16 +15,13 @@ from typing import (
     Self,
     Tuple,
     List,
-    Optional,
     Callable,
 )
 from enum import (
     IntEnum,
-    IntFlag,
     auto,
 )
 from copy import deepcopy
-from lmfit.models import PolynomialModel
 from functools import partial
 from PyQt6.QtGui import (
     QColor,
@@ -32,7 +29,6 @@ from PyQt6.QtGui import (
 )
 from construct import (
     Float16l,
-    Float16b,
     Array,
 )
 from .colorspace import (
@@ -50,25 +46,30 @@ class GradientWeight(IntEnum):
     RGB = 0x1
     Unweighted = 0x0
 
+
 class GradientMix(IntEnum):
     Oklab = 0x1
     Cielab = 0x2
     RGB = 0x0
+
 
 class FitModel(IntEnum):
     Trigonometric = auto()
     HornerPolynomial = auto()
     Harmonic = auto()
 
+
 class Wraparound(IntEnum):
     Wrap = auto()
     NoWrap = auto()
+
 
 class FitAlgorithm(IntEnum):
     LM = auto()
     TRF = auto()
     DogBox = auto()
     CMAES = auto()
+
 
 class ColorGradient:
     def __init__(
@@ -195,7 +196,7 @@ class ColorGradient:
     def evaluate(
         self: Self,
         amount: float,
-    ) -> Color:
+    ) -> vec3:
         amount = fract(amount)
         for colorIndex in range(self.colorCount):
             if amount < self.weights[(colorIndex + 1) % self.colorCount]:
@@ -218,7 +219,7 @@ class ColorGradient:
                 upperWeight: float = self.weights[(colorIndex + 1) % len(self._colors)]
                 localAmount: float = (amount - lowerWeight) / abs(upperWeight - lowerWeight)
                 
-                result: Color = mix(c1, c2, localAmount)
+                result: vec3 = mix(c1, c2, localAmount)
 
                 return ColorSpace.convert(
                     result,

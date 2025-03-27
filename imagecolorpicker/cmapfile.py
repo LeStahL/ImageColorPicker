@@ -11,7 +11,6 @@ from rtoml import (
     dumps,
 )
 from hashlib import md5
-from PyQt6.QtCore import QByteArray
 
 class CMapFile:
     DefaultPreviewColorSpaces: list[list[ColorSpaceType]] = [

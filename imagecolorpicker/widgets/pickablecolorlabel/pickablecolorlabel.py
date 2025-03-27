@@ -1,8 +1,32 @@
-from typing import *
-from PyQt6 import QtGui
-from PyQt6.QtCore import *
-from PyQt6.QtWidgets import *
-from PyQt6.QtGui import *
+from PyQt6.QtCore import (
+    pyqtSignal,
+    QPoint,
+    QPointF,
+    Qt,
+    QSizeF,
+    QRectF,
+    QUrl,
+    QByteArray,
+)
+from PyQt6.QtWidgets import (
+    QWidget,
+    QApplication,
+)
+from PyQt6.QtGui import (
+    QImage,
+    QColor,
+    QPaintEvent,
+    QPainter,
+    QPen,
+    QDragEnterEvent,
+    QDropEvent,
+    QMouseEvent,
+    QPixmap,
+)
+from typing import (
+    Self,
+    Optional,
+)
 from PyQt6.QtNetwork import (
     QNetworkAccessManager,
     QNetworkRequest,
@@ -10,7 +34,6 @@ from PyQt6.QtNetwork import (
 )
 from sys import argv
 from importlib.resources import files
-from pathlib import Path
 from bs4 import BeautifulSoup
 from base64 import b64decode
 from traceback import print_exc
@@ -136,8 +159,11 @@ class PickableColorLabel(QWidget):
             a0.mimeData().hasUrls():
             a0.acceptProposedAction()
 
-    def dropEvent(self: Self, a0: QDropEvent) -> None:
+    def dropEvent(self: Self, a0: Optional[QDropEvent]) -> None:
         super().dropEvent(a0)
+
+        if a0 is None:
+            return
 
         if a0.mimeData().hasImage():
             self.setImage(a0.mimeData().imageData())
@@ -157,13 +183,13 @@ class PickableColorLabel(QWidget):
     def loadFromUrl(self: Self, url: QUrl) -> None:
         request: QNetworkRequest = QNetworkRequest(url)
         reply: QNetworkReply = self._networkManager.get(request)
-        result: bytes = reply.readAll()
+        result: QByteArray = reply.readAll()
 
         self.loadFromBinary(result)
 
     def loadFromHTML(self: Self, html: str) -> None:
         try:
-            html = BeautifulSoup(
+            html: BeautifulSoup = BeautifulSoup(
                 html,
                 features='html.parser',
             )

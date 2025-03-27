@@ -1,23 +1,17 @@
 from PyQt6.QtGui import (
-    QMouseEvent,
     QPaintEvent,
     QPainter,
     QBrush,
     QPen,
-    QColor,
-    QFont,
-    QPalette,
 )
 from PyQt6.QtWidgets import (
     QWidget,
     QApplication,
 )
 from PyQt6.QtCore import (
-    QPoint,
     QPointF,
     QRect,
     QRectF,
-    QTimer,
 )
 from typing import (
     Self,
@@ -25,12 +19,9 @@ from typing import (
 )
 from imagecolorpicker.colorgradient import (
     ColorGradient,
-    GradientWeight,
-    GradientMix,
     DefaultGradient1,
 )
 from sys import argv
-from datetime import datetime, timedelta
 
 
 class GradientWidget(QWidget):

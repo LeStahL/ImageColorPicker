@@ -17,8 +17,8 @@ from glm import (
 )
 from typing import (
     Self,
-    List,
     Callable,
+    Any,
 )
 from enum import (
     IntEnum,
@@ -592,6 +592,8 @@ class ColorSpace:
 
     Graph: DiGraph = DiGraph(Edges.keys())
 
+    DijkstraCache: dict[tuple[ColorSpaceType, ColorSpaceType], Any] = {}
+
     @staticmethod
     def convert(
         color: vec3,
@@ -599,8 +601,11 @@ class ColorSpace:
         toColorSpace: ColorSpaceType,
         **kwargs,
     ) -> vec3:
-        print(f"Finding shortest path from {fromColorSpace.name} to {toColorSpace.name} with dijkstra.") 
-        path = shortest_path(ColorSpace.Graph, fromColorSpace, toColorSpace)
+        if (fromColorSpace, toColorSpace) in ColorSpace.DijkstraCache.keys():
+            path = ColorSpace.DijkstraCache[fromColorSpace, toColorSpace]
+        else:
+            path = shortest_path(ColorSpace.Graph, fromColorSpace, toColorSpace)
+            ColorSpace.DijkstraCache[fromColorSpace, toColorSpace] = path
         result: vec3 = color
         for nodeIndex in range(len(path) - 1):
             edge = path[nodeIndex], path[nodeIndex + 1]
@@ -609,7 +614,6 @@ class ColorSpace:
             if ColorSpaceParameterType.Illuminant in parameterTypes and \
                 ColorSpaceParameterType.Observer in parameterTypes:
                 parameters.append(ColorSpace.Tristimuli[kwargs['observer']][kwargs['illuminant']])
-            # print("Applying", transform)
             result = transform(result, *parameters)
         return result
     
