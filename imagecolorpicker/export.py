@@ -1,7 +1,7 @@
 from .representation import Representation
 from .language import Language
 from glm import vec3
-from .colorgradient import ColorGradient, DefaultGradient1, DefaultGradient2
+from .colorgradient import ColorGradient, DefaultGradient1, DefaultGradient2, FitModel
 from typing import (
     Callable,
     Union,
@@ -40,12 +40,15 @@ class Export:
         if language == Language.GLSL:
             if representation == Representation.ColorMap:
                 cmap: list[vec3] = selectedGradient.coefficients
-                openStack: str = '\n        +t*('.join(map(
-                    lambda color: f'vec3({color.x:.2f}, {color.y:.2f}, {color.z:.2f})',
-                    cmap,
-                ))
-                closeStack: str = ')' * (len(cmap) - 1)
-                return f'vec3 cmap_{Export.MakeIdentifier(selectedGradient._name)}(float t) {{\n    return {openStack}\n    {closeStack};\n}}\n'
+                if selectedGradient._model == FitModel.HornerPolynomial:
+                    openStack: str = '\n        +t*('.join(map(
+                        lambda color: f'vec3({color.x:.2f}, {color.y:.2f}, {color.z:.2f})',
+                        cmap,
+                    ))
+                    closeStack: str = ')' * (len(cmap) - 1)
+                    return f'vec3 cmap_{Export.MakeIdentifier(selectedGradient._name)}(float t) {{\n    return {openStack}\n    {closeStack};\n}}\n'
+                elif selectedGradient._model == FitModel.Trigonometric:
+                    return f'vec3 cmap_{Export.MakeIdentifier(selectedGradient._name)}(float t) {{\n    return vec3({cmap[0].x:.4f}, {cmap[0].y:.4f}, {cmap[0].z:.4f}) + vec3({cmap[1].x:.4f}, {cmap[1].y:.4f}, {cmap[1].z:.4f}) * cos(2. * pi * (vec3({cmap[2].x:.4f}, {cmap[2].y:.4f}, {cmap[2].z:.4f}) * t + vec3({cmap[3].x:.4f}, {cmap[3].y:.4f}, {cmap[3].z:.4f})));\n}}\n'
             elif representation == Representation.Color3:
                 return f'vec3({selectedColor.x:.2f}, {selectedColor.y:.2f}, {selectedColor.z:.2f})'
             elif representation == Representation.Color4:
@@ -102,7 +105,6 @@ class Export:
                     colorStops,
                 ))
                 return f'linear-gradient({colorSlide})'
-
         elif language == Language.SVG:
             if representation == Representation.ColorMap:
                 amounts = list(map(float, range(101)))

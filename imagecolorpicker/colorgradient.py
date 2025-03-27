@@ -325,6 +325,7 @@ class ColorGradient:
                 gp[parameterIndex],
                 bp[parameterIndex],
             ))
+        print(result)
         return result
     
     def allColorMaps(
