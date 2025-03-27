@@ -24,11 +24,8 @@ a = Analysis(
     binaries=[],
     datas=[
         (buildPath / '{}.py'.format(Version.VersionModuleName), moduleName),
-        (join(sourcePath, 'mainwindow.ui'), moduleName),
-        (join(sourcePath, 'gradienteditor.ui'), moduleName),
         (join(sourcePath, 'team210.ico'), moduleName),
-        (join(sourcePath, 'gradientpreview.frag'), moduleName),
-        (join(sourcePath, 'default.png'), moduleName),
+        (join(sourcePath, 'widgets', 'pickablecolorlabel', 'default.png'), join(moduleName, 'widgets', 'pickablecolorlabel')),
     ],
     hiddenimports=[
         '_cffi_backend',

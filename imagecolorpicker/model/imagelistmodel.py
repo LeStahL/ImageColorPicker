@@ -81,7 +81,11 @@ class ImageListModel(QAbstractListModel):
         
         elif roleEnum == Qt.ItemDataRole.SizeHintRole:
             image: QImage = self._imageList[index.row()]
-            aspect = float(image.width()) / float(image.height())
+            aspect: float
+            if float(image.height()) == 0.:
+                aspect = 1.
+            else:
+                aspect = float(image.width()) / float(image.height())
             return QSize(ImageListModel.DefaultImageWidth, int(ImageListModel.DefaultImageWidth / aspect))
 
     
