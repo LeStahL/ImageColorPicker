@@ -140,7 +140,28 @@ class Export:
                 ))
                 return f'<linearGradient>\n{colorSlide}\n</linearGradient>'
         elif language == Language.Python:
-            pass
+            if representation == Representation.ColorMaps:
+                cmaps: list[list[list[float]]] = reduce(
+                    lambda accumulator, addition: accumulator + addition,
+                    map(
+                        lambda gradient: list(map(
+                            lambda coefficient: [coefficient.x, coefficient.y, coefficient.z],
+                            gradient.coefficients,
+                        )),
+                        gradientList,
+                    ),
+                )
+                # print(cmaps)
+                if Export.AllCMapsSameWidthSameModel(gradientList):
+                    data = Array(
+                        len(gradientList) * gradientList[0]._degree,
+                        Array(
+                            3,
+                            Float16l,
+                        )
+                    ).build(cmaps)
+                    return str(data)
+                
         elif language == Language.NASM:
             pass
         elif language == Language.C:
