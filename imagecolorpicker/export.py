@@ -99,9 +99,7 @@ class Export:
                     ))
                     result = f'const int gradient_count = {len(gradientList)};\nconst int single_gradient_size = {gradientList[0]._degree};\nconst vec3 all_cmap_coefficients[] = vec3[](\n    {coefficientSlide}\n);\n'
                     if selectedGradient._model == FitModel.HornerPolynomial:
-                        openStack: str = '\n        +t*('.join(cmap)
-                        closeStack: str = ')' * (len(cmap) - 1)
-                        return result + f'vec3 cmap(float t, int index) {{\n    return {openStack}\n    {closeStack};\n}}\n'
+                        return result + f'vec3 cmap(float t, int index) {{\n    vec3 a = all_cmap_coefficients[(index + 1) * single_gradient_size - 1];\n    for(int i = single_gradient_size - 2; i >= 0; --i)\n        a = all_cmap_coefficients[index * single_gradient_size + i] + t * a;\n    return a;\n}}\n'
                     elif selectedGradient._model == FitModel.Trigonometric:
                         return result + f'vec3 cmap(float t, int index) {{\n    return vec3({cmap[0].x:.4f}, {cmap[0].y:.4f}, {cmap[0].z:.4f}) + vec3({cmap[1].x:.4f}, {cmap[1].y:.4f}, {cmap[1].z:.4f}) * cos(2. * pi * (vec3({cmap[2].x:.4f}, {cmap[2].y:.4f}, {cmap[2].z:.4f}) * t + vec3({cmap[3].x:.4f}, {cmap[3].y:.4f}, {cmap[3].z:.4f})));\n}}\n'
                 else: 
