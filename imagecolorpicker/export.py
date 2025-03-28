@@ -28,6 +28,16 @@ class Export:
     @staticmethod
     def MakeIdentifier(name: str) -> str:
         return sub('\W|^(?=\d)', '_', name)
+    
+    @staticmethod
+    def AllCMapsSameWidthSameModel(gradientList: list[ColorGradient]):
+        return len(set(map(
+            lambda gradient: gradient._degree,
+            gradientList,
+        ))) == 1 and len(set(map(
+            lambda gradient: gradient._model,
+            gradientList,
+        ))) == 1
 
     @staticmethod
     def Export(
@@ -81,17 +91,31 @@ class Export:
                     lambda color: f'vec3({color.x:.2f}, {color.y:.2f}, {color.z:.2f})',
                     cmaps,
                 )))
-                cmap_offsets = []
-                offset = 0
-                for gradient in gradientList:
-                    cmap_offsets.append(offset)
-                    offset += len(gradient.coefficients)
-                cmap_offsets.append(len(cmaps))
-                offsetSlide = ',\n    '.join(map(
-                    str,
-                    cmap_offsets,
-                ))
-                return f'const int all_cmap_coefficient_count = {len(cmaps)};\nconst int offsets_per_cmap[] = int[](\n    {offsetSlide}\n);\nconst vec3 all_cmap_coefficients[] = vec3[](\n    {coefficientSlide}\n);\nvec3 cmap(int index, float t) {{\n    vec3 a = all_cmap_coefficients[offsets_per_cmap[index + 1] - 1];\n    for(int i = offsets_per_cmap[index + 1] - 2; i >= offsets_per_cmap[index]; --i) {{\n        a = all_cmap_coefficients[i] + t * a;\n    }}\n    return a;\n}}'
+                if Export.AllCMapsSameWidthSameModel(gradientList):
+                    # Now we can use modulo, integer division etc.
+                    cmap = list(map(
+                        lambda index: f'all_cmap_coefficients[index * single_gradient_size + {index}]',
+                        range(gradientList[0]._degree),
+                    ))
+                    result = f'const int gradient_count = {len(gradientList)};\nconst int single_gradient_size = {gradientList[0]._degree};\nconst vec3 all_cmap_coefficients[] = vec3[](\n    {coefficientSlide}\n);\n'
+                    if selectedGradient._model == FitModel.HornerPolynomial:
+                        openStack: str = '\n        +t*('.join(cmap)
+                        closeStack: str = ')' * (len(cmap) - 1)
+                        return result + f'vec3 cmap(float t, int index) {{\n    return {openStack}\n    {closeStack};\n}}\n'
+                    elif selectedGradient._model == FitModel.Trigonometric:
+                        return result + f'vec3 cmap(float t, int index) {{\n    return vec3({cmap[0].x:.4f}, {cmap[0].y:.4f}, {cmap[0].z:.4f}) + vec3({cmap[1].x:.4f}, {cmap[1].y:.4f}, {cmap[1].z:.4f}) * cos(2. * pi * (vec3({cmap[2].x:.4f}, {cmap[2].y:.4f}, {cmap[2].z:.4f}) * t + vec3({cmap[3].x:.4f}, {cmap[3].y:.4f}, {cmap[3].z:.4f})));\n}}\n'
+                else: 
+                    cmap_offsets = []
+                    offset = 0
+                    for gradient in gradientList:
+                        cmap_offsets.append(offset)
+                        offset += len(gradient.coefficients)
+                    cmap_offsets.append(len(cmaps))
+                    offsetSlide = ',\n    '.join(map(
+                        str,
+                        cmap_offsets,
+                    ))
+                    return f'const int gradient_count = {len(gradientList)};\nconst int all_cmap_coefficient_count = {len(cmaps)};\nconst int offsets_per_cmap[] = int[](\n    {offsetSlide}\n);\nconst vec3 all_cmap_coefficients[] = vec3[](\n    {coefficientSlide}\n);\nvec3 cmap(float t, int index) {{\n    vec3 a = all_cmap_coefficients[offsets_per_cmap[index + 1] - 1];\n    for(int i = offsets_per_cmap[index + 1] - 2; i >= offsets_per_cmap[index]; --i) {{\n        a = all_cmap_coefficients[i] + t * a;\n    }}\n    return a;\n}}'
         elif language == Language.HLSL:
             pass
         elif language == Language.CSS:

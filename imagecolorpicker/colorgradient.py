@@ -57,6 +57,7 @@ class FitModel(IntEnum):
     Trigonometric = auto()
     HornerPolynomial = auto()
     Harmonic = auto()
+    Gaussian = auto()
 
 
 class Wraparound(IntEnum):
@@ -296,7 +297,9 @@ class ColorGradient:
         elif self._model == FitModel.Harmonic:
             model = OptimizationModel.Harmonic
             initialGuess = OptimizationModel.HarmonicInitialGuess(self._degree)
-        
+        elif self._model == FitModel.Gaussian:
+            model = OptimizationModel.Gauss
+            initialGuess = OptimizationModel.GaussInitialGuess(self._degree)
         # Fit red
         r = array(list(map(
             lambda color: color.x,
@@ -402,6 +405,8 @@ class ColorGradient:
             model = OptimizationModel.Trigonometric
         elif self._model == FitModel.Harmonic:
             model = OptimizationModel.Harmonic
+        elif self._model == FitModel.Gaussian:
+            model = OptimizationModel.Gauss
         
         return vec3(
             model(t, *list(map(

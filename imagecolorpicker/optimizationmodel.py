@@ -61,3 +61,20 @@ class OptimizationModel:
             [.5] * degree,
             [.5] * degree,
         ]
+
+    @staticmethod
+    def Gauss(t: float, *p: tuple[float]) -> float:
+        result = 0
+        for k in range(len(p) // 3):
+            mu, sigma, s = p[3 * k:3 * k + 3]
+            c = sqrt(2 * pi)
+            result += s * exp(-((t - mu) / sigma)**2 / 2) / sigma / c
+        return result
+
+    @staticmethod
+    def GaussInitialGuess(degree) -> list[list[float]]:
+        return [
+            [.5, .2, 1.] * degree,
+            [.5, .2, 1.] * degree,
+            [.5, .2, 1.] * degree,
+        ]
