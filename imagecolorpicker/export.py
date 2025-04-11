@@ -192,6 +192,8 @@ class Export:
                     colorStops,
                 ))
                 return f'linear-gradient({colorSlide})'
+            elif representation == Representation.Color3:
+                return QColor.fromRgbF(selectedColor.x, selectedColor.y, selectedColor.z).name()
         elif language == Language.SVG:
             if representation == Representation.ColorMap:
                 amounts = list(map(float, range(101)))
