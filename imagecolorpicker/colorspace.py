@@ -306,8 +306,8 @@ class ColorSpace:
 
         return vec3(
             100.0 * sqrt(ciexyz.y / whitepoint.y),
-            var_Ka * (ciexyz.x / whitepoint.x - ciexyz.y / whitepoint.y) / sqrt(ciexyz.y / whitepoint.y),
-            var_Kb * (ciexyz.y / whitepoint.y - ciexyz.z / whitepoint.z) / sqrt(ciexyz.y / whitepoint.y),
+            var_Ka * (ciexyz.x / whitepoint.x - ciexyz.y / whitepoint.y) / sqrt(ciexyz.y / whitepoint.y) if ciexyz.y != 0. else 1.,
+            var_Kb * (ciexyz.y / whitepoint.y - ciexyz.z / whitepoint.z) / sqrt(ciexyz.y / whitepoint.y) if ciexyz.y != 0. else 1.,
         )
 
     @staticmethod
