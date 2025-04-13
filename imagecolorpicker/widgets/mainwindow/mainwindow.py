@@ -10,6 +10,7 @@ from PyQt6.QtCore import (
     Qt,
     QUrl,
     QPointF,
+    QVariant,
 )
 from PyQt6.QtWidgets import (
     QWidget,
@@ -26,6 +27,7 @@ from typing import (
     Self,
     Optional,
 )
+from imagecolorpicker.importer import Importer
 
 
 class CoordinateType(IntEnum):
@@ -36,6 +38,7 @@ class CoordinateType(IntEnum):
 
 class MainWindow(QMainWindow):
     quitRequested: pyqtSignal = pyqtSignal()
+    cmapPasted: pyqtSignal = pyqtSignal(QVariant)
 
     UIFile = "mainwindow.ui"
     
@@ -96,10 +99,17 @@ class MainWindow(QMainWindow):
     def paste(self: Self) -> None:
         clipboard = QGuiApplication.clipboard()
 
+        if clipboard.mimeData().hasText():
+            try:
+                self.cmapPasted.emit(Importer.HornerPolynomial(clipboard.mimeData().text()))
+            except:
+                pass
         if clipboard.mimeData().hasImage():
             self._ui.picker.setImage(clipboard.image())
+            self._ui.picker.imageChanged.emit(self._ui.picker._image)
         if clipboard.mimeData().hasHtml():
             self._ui.picker.loadFromHTML(clipboard.mimeData().html())
+            self._ui.picker.imageChanged.emit(self._ui.picker._image)
         if clipboard.mimeData().hasUrls():
             if len(clipboard.mimeData().urls()) == 0:
                 return
@@ -107,9 +117,7 @@ class MainWindow(QMainWindow):
             # Only load first URL.
             url: QUrl = clipboard.mimeData().urls()[0]
             self._ui.picker.loadFromUrl(url)
-
-        # Yeah I know.
-        self._ui.picker.imageChanged.emit(self._ui.picker._image)
+            self._ui.picker.imageChanged.emit(self._ui.picker._image)
 
     def about(self: Self) -> None:
         aboutMessage = QMessageBox()

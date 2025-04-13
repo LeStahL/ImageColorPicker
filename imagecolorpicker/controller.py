@@ -62,6 +62,7 @@ from .representation import Representation
 from .model.settingsmodel import SettingsModel
 from .delegate.settingsdelegate import SettingsDelegate
 from .export import Export
+from .optimizationmodel import OptimizationModel
 
 
 class Controller:
@@ -153,6 +154,8 @@ class Controller:
 
         self._settingsDelegate: SettingsDelegate = SettingsDelegate()
         self._mainWindow._ui.settingsTableView.setItemDelegate(self._settingsDelegate)
+
+        self._mainWindow.cmapPasted.connect(self._cmapPasted)
 
     def _copy(self: Self) -> None:
         clipboard = QGuiApplication.clipboard()
@@ -376,6 +379,39 @@ class Controller:
             index = self._gradientListModel._currentIndex
             self.updateFromCmapFile()
             self._gradientListModel.changeCurrent(index)
+
+    def _cmapPasted(self: Self, cmap: list[vec3]) -> None:
+        print(cmap)
+        colors = []
+        for colorIndex in range(self._cmapFile._gradients[self._gradientListModel._currentIndex].colorCount):
+            colors.append(vec3(
+                OptimizationModel.Polynomial(
+                    colorIndex / self._cmapFile._gradients[self._gradientListModel._currentIndex].colorCount,
+                    *map(
+                        lambda cmapEntry: cmapEntry.x,
+                        cmap,
+                    ),
+                ),
+                OptimizationModel.Polynomial(
+                    colorIndex / self._cmapFile._gradients[self._gradientListModel._currentIndex].colorCount,
+                    *map(
+                        lambda cmapEntry: cmapEntry.y,
+                        cmap,
+                    ),
+                ),
+                OptimizationModel.Polynomial(
+                    colorIndex / self._cmapFile._gradients[self._gradientListModel._currentIndex].colorCount,
+                    *map(
+                        lambda cmapEntry: cmapEntry.z,
+                        cmap,
+                    ),
+                ),
+            ))
+        # colors = ColorSpace.SortByCIEH(colors)
+        self._cmapFile._gradients[self._gradientListModel._currentIndex]._colors = colors
+        index = self._gradientListModel._currentIndex
+        self.updateFromCmapFile()
+        self._gradientListModel.changeCurrent(index)
 
     def startApplication(
         self: Self,
