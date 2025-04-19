@@ -1,15 +1,7 @@
-from __future__ import annotations
-from sys import (
-    argv,
-    exit,
-)
 from PyQt6.QtWidgets import QApplication
-from imagecolorpicker.mainwindow import MainWindow
+from imagecolorpicker.controller import Controller
 
 if __name__ == '__main__':
-    application: QApplication = QApplication(argv)
-
-    mainWindow = MainWindow()
-    mainWindow.show()
-
-    exit(application.exec())
+    controller: Controller = Controller()
+    controller.startApplication()
+    QApplication.exit(0)

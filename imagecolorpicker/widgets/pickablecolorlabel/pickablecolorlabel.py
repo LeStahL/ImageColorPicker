@@ -1,24 +1,48 @@
-from typing import *
-from PyQt6 import QtGui
-from PyQt6.QtCore import *
-from PyQt6.QtWidgets import *
-from PyQt6.QtGui import *
+from PyQt6.QtCore import (
+    pyqtSignal,
+    QPoint,
+    QPointF,
+    Qt,
+    QSizeF,
+    QRectF,
+    QUrl,
+    QByteArray,
+)
+from PyQt6.QtWidgets import (
+    QWidget,
+    QApplication,
+)
+from PyQt6.QtGui import (
+    QImage,
+    QColor,
+    QPaintEvent,
+    QPainter,
+    QPen,
+    QDragEnterEvent,
+    QDropEvent,
+    QMouseEvent,
+    QPixmap,
+)
+from typing import (
+    Self,
+    Optional,
+)
 from PyQt6.QtNetwork import (
     QNetworkAccessManager,
     QNetworkRequest,
     QNetworkReply,
 )
 from sys import argv
-from os.path import (
-    join,
-    dirname,
-)
+from importlib.resources import files
 from bs4 import BeautifulSoup
 from base64 import b64decode
 from traceback import print_exc
 from requests import get
+from imagecolorpicker.widgets import pickablecolorlabel
 
 class PickableColorLabel(QWidget):
+    imageChanged: pyqtSignal = pyqtSignal(QImage)
+
     DefaultImage = 'default.png'
     CursorSize = 0.05
 
@@ -36,7 +60,7 @@ class PickableColorLabel(QWidget):
         self.setMouseTracking(True)
         self.setAcceptDrops(True)
 
-        self._image: QImage = QImage(join(dirname(__file__), PickableColorLabel.DefaultImage))
+        self._image: QImage = QImage(str(files(pickablecolorlabel) / PickableColorLabel.DefaultImage))
         self._cursor: QPointF = QPointF(0., 0.)
         self._color: QColor = QColor()
         self._picking: bool = False
@@ -44,7 +68,7 @@ class PickableColorLabel(QWidget):
         self._networkManager: QNetworkAccessManager = QNetworkAccessManager()
 
     @property
-    def components(self: Self) -> Tuple[float]:
+    def components(self: Self) -> tuple[float, float, float]:
         return self._color.redF(), self._color.greenF(), self._color.blueF()
 
     def paintEvent(self: Self, a0: Optional[QPaintEvent]) -> None:
@@ -127,20 +151,26 @@ class PickableColorLabel(QWidget):
 
         # print(a0.mimeData().formats())
 
-        if True in [
-            a0.mimeData().hasImage(),
-            a0.mimeData().hasHtml(),
-            a0.mimeData().hasUrls(),
-        ]:
+        if a0.mimeData() is None:
+            return
+
+        if a0.mimeData().hasImage() or \
+            a0.mimeData().hasHtml() or \
+            a0.mimeData().hasUrls():
             a0.acceptProposedAction()
 
-    def dropEvent(self: Self, a0: QDropEvent) -> None:
+    def dropEvent(self: Self, a0: Optional[QDropEvent]) -> None:
         super().dropEvent(a0)
+
+        if a0 is None:
+            return
 
         if a0.mimeData().hasImage():
             self.setImage(a0.mimeData().imageData())
+            self.imageChanged.emit(self._image)
         elif a0.mimeData().hasHtml():
             self.loadFromHTML(a0.mimeData().html())
+            self.imageChanged.emit(self._image)
         elif a0.mimeData().hasUrls():
             if len(a0.mimeData().urls()) == 0:
                 return
@@ -148,17 +178,18 @@ class PickableColorLabel(QWidget):
             # Only load first URL.
             url: QUrl = a0.mimeData().urls()[0]
             self.loadFromUrl(url)
+            self.imageChanged.emit(self._image)
 
     def loadFromUrl(self: Self, url: QUrl) -> None:
         request: QNetworkRequest = QNetworkRequest(url)
         reply: QNetworkReply = self._networkManager.get(request)
-        result: bytes = reply.readAll()
+        result: QByteArray = reply.readAll()
 
         self.loadFromBinary(result)
 
     def loadFromHTML(self: Self, html: str) -> None:
         try:
-            html = BeautifulSoup(
+            html: BeautifulSoup = BeautifulSoup(
                 html,
                 features='html.parser',
             )
@@ -188,3 +219,11 @@ class PickableColorLabel(QWidget):
         except:
             print_exc()
             print("Attempted to load unsupported image binary.")
+
+if __name__ == '__main__':
+    app: QApplication = QApplication(argv)
+
+    label: PickableColorLabel = PickableColorLabel()
+    label.show()
+
+    app.exec()

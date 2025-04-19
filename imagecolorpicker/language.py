@@ -6,3 +6,7 @@ class Language(IntEnum):
     HLSL = auto()
     CSS = auto()
     SVG = auto()
+    Python = auto()
+    NASM = auto()
+    C = auto()
+    CablesJSON = auto()
