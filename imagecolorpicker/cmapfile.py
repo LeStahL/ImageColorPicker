@@ -72,3 +72,13 @@ class CMapFile:
             lambda previewInfo: [ColorSpaceType[previewInfo['weight']], ColorSpaceType[previewInfo['mix']]],
             info['preview_color_spaces'],
         ))
+
+    @staticmethod
+    def isCmapFile(path: Path) -> bool:
+        try:
+            info = loads(path.read_text())
+            if 'images' in info and 'gradients' in info and 'preview_color_spaces' in info:
+                return True
+        except:
+            pass
+        return False
