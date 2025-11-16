@@ -328,6 +328,18 @@ class ColorGradient:
                 gp[parameterIndex],
                 bp[parameterIndex],
             ))
+        if self._model == FitModel.HornerPolynomial:
+            o = len(bp) + 1
+            result.append(vec3(
+                1. / (o - 2) * (rp[o - 2] - sum(map(lambda i: i * rp[i] - rp[i - 1], range(2, o - 1)))),
+                1. / (o - 2) * (gp[o - 2] - sum(map(lambda i: i * gp[i] - gp[i - 1], range(2, o - 1)))),
+                1. / (o - 2) * (bp[o - 2] - sum(map(lambda i: i * bp[i] - bp[i - 1], range(2, o - 1)))),
+            ))
+            result.append(vec3(
+                (1 - o) / (o - 2) * (rp[o - 2] - sum(map(lambda i: i * rp[i] - rp[i - 1], range(2, o - 1)))) - sum(map(lambda i: i * rp[i], range(2, o - 1))),
+                (1 - o) / (o - 2) * (gp[o - 2] - sum(map(lambda i: i * gp[i] - gp[i - 1], range(2, o - 1)))) - sum(map(lambda i: i * gp[i], range(2, o - 1))),
+                (1 - o) / (o - 2) * (bp[o - 2] - sum(map(lambda i: i * bp[i] - bp[i - 1], range(2, o - 1)))) - sum(map(lambda i: i * bp[i], range(2, o - 1))),
+            ))
         print(result)
         return result
     
