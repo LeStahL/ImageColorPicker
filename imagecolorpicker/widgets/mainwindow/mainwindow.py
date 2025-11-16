@@ -28,6 +28,8 @@ from typing import (
     Optional,
 )
 from imagecolorpicker.importer import Importer
+from imagecolorpicker.plot import Plot
+from imagecolorpicker.colorgradient import DefaultGradient1
 
 
 class CoordinateType(IntEnum):
@@ -60,6 +62,12 @@ class MainWindow(QMainWindow):
         self._ui.actionNormalized_Top_Down.triggered.connect(lambda: self._updateCoordinateType(CoordinateType.NormalizedTopDown))
  
         # self.tabifyDockWidget(self._ui.gradientPreviewDockWidget, self._ui.gradientListDockWidget)
+        self._plot = Plot()
+        self._plot.loadGradient(DefaultGradient1)
+        self._plot.resize(256, 200)
+        self._ui.dockWidget_2.resize(256, 200)
+        self._ui.verticalLayout_9.addWidget(self._plot)
+        self.tabifyDockWidget(self._ui.gradientPropertyDockWidget, self._ui.dockWidget_2)
         self.tabifyDockWidget(self._ui.gradientPropertyDockWidget, self._ui.gradientColorDockWidget)
 
         self._ui.picker.hovered.connect(lambda cursor: self.statusBar().showMessage('Position: x = {}, y = {}'.format(*self._coordinates(cursor.x(), cursor.y()))))
@@ -71,6 +79,7 @@ class MainWindow(QMainWindow):
         self._ui.actionForce_16_9_View.triggered.connect(self._force16_9View)
 
         self._ui.actionAbout_Qt.triggered.connect(self.aboutQt)
+
 
     def _updateCoordinateType(self: Self, coordinateType: CoordinateType) -> None:
         self._coordinateType = coordinateType

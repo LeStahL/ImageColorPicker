@@ -56,8 +56,8 @@ class GradientMix(IntEnum):
 class FitModel(IntEnum):
     Trigonometric = auto()
     HornerPolynomial = auto()
-    Harmonic = auto()
-    Gaussian = auto()
+    Fourier = auto()
+    Exponential = auto()
 
 
 class Wraparound(IntEnum):
@@ -294,12 +294,12 @@ class ColorGradient:
         elif self._model == FitModel.Trigonometric:
             model = OptimizationModel.Trigonometric
             initialGuess = OptimizationModel.TrigonometricInitialGuess()
-        elif self._model == FitModel.Harmonic:
-            model = OptimizationModel.Harmonic
-            initialGuess = OptimizationModel.HarmonicInitialGuess(self._degree)
-        elif self._model == FitModel.Gaussian:
-            model = OptimizationModel.Gauss
-            initialGuess = OptimizationModel.GaussInitialGuess(self._degree)
+        elif self._model == FitModel.Fourier:
+            model = OptimizationModel.Fourier
+            initialGuess = OptimizationModel.FourierInitialGuess(self._degree)
+        elif self._model == FitModel.Exponential:
+            model = OptimizationModel.Exponential
+            initialGuess = OptimizationModel.ExponentialInitialGuess(self._degree)
         # Fit red
         r = array(list(map(
             lambda color: color.x,
@@ -403,10 +403,10 @@ class ColorGradient:
             model = OptimizationModel.Polynomial
         elif self._model == FitModel.Trigonometric:
             model = OptimizationModel.Trigonometric
-        elif self._model == FitModel.Harmonic:
-            model = OptimizationModel.Harmonic
-        elif self._model == FitModel.Gaussian:
-            model = OptimizationModel.Gauss
+        elif self._model == FitModel.Fourier:
+            model = OptimizationModel.Fourier
+        elif self._model == FitModel.Exponential:
+            model = OptimizationModel.Exponential
         
         return vec3(
             model(t, *list(map(

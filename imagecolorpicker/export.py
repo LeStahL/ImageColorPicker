@@ -59,6 +59,12 @@ class Export:
                     return f'vec3 cmap_{Export.MakeIdentifier(selectedGradient._name)}(float t) {{\n    return {openStack}\n    {closeStack};\n}}\n'
                 elif selectedGradient._model == FitModel.Trigonometric:
                     return f'vec3 cmap_{Export.MakeIdentifier(selectedGradient._name)}(float t) {{\n    return vec3({cmap[0].x:.4f}, {cmap[0].y:.4f}, {cmap[0].z:.4f}) + vec3({cmap[1].x:.4f}, {cmap[1].y:.4f}, {cmap[1].z:.4f}) * cos(2. * pi * (vec3({cmap[2].x:.4f}, {cmap[2].y:.4f}, {cmap[2].z:.4f}) * t + vec3({cmap[3].x:.4f}, {cmap[3].y:.4f}, {cmap[3].z:.4f})));\n}}\n'
+                elif selectedGradient._model == FitModel.Fourier:
+                    slide = "\n      + ".join(map(lambda colorIndex: f"vec3({cmap[colorIndex].x:.2f}, {cmap[colorIndex].y:.2f}, {cmap[colorIndex].z:.2f}) * cos(pi * {colorIndex:.2f} * t)", range(len(cmap))))
+                    return f'vec3 cmap_{Export.MakeIdentifier(selectedGradient._name)}(float t) {{\n    return\n        {slide};\n}}'
+                elif selectedGradient._model == FitModel.Exponential:
+                    slide = "\n      + ".join(map(lambda colorIndex: f"vec3({cmap[colorIndex].x:.2f}, {cmap[colorIndex].y:.2f}, {cmap[colorIndex].z:.2f}) * exp(-{colorIndex:.2f} * t)", range(len(cmap))))
+                    return f'vec3 cmap_{Export.MakeIdentifier(selectedGradient._name)}(float t) {{\n    return\n        {slide};\n}}'
             elif representation == Representation.Color3:
                 return f'vec3({selectedColor.x:.2f}, {selectedColor.y:.2f}, {selectedColor.z:.2f})'
             elif representation == Representation.Color4:

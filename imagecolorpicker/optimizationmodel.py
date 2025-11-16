@@ -48,33 +48,31 @@ class OptimizationModel:
         return result
 
     @staticmethod
-    def Harmonic(t: float, *c: tuple[float]) -> float:
-        result = 0.
-        for k in range(len(c) // 2):
-            result += 1 / c[2 * k] / sqrt(2 * pi) * exp(-((t - c[2 * k + 1]) / (c[2 * k])) ** 2)
-        return result
-    
-    @staticmethod
-    def HarmonicInitialGuess(degree) -> list[list[float]]:
+    def FourierInitialGuess(degree: int) -> list[list[float]]:
         return [
-            [.5] * degree,
-            [.5] * degree,
-            [.5] * degree,
+            [1.] * degree,
+            [1.] * degree,
+            [1.] * degree,
         ]
 
     @staticmethod
-    def Gauss(t: float, *p: tuple[float]) -> float:
-        result = 0
-        for k in range(len(p) // 3):
-            mu, sigma, s = p[3 * k:3 * k + 3]
-            c = sqrt(2 * pi)
-            result += s * exp(-((t - mu) / sigma)**2 / 2) / sigma / c
+    def Fourier(t: float, *c: tuple[float]) -> float:
+        result = c[0]
+        for k in range(1, len(c)):
+            result += c[k] * cos(pi * k * t)
         return result
 
     @staticmethod
-    def GaussInitialGuess(degree) -> list[list[float]]:
+    def ExponentialInitialGuess(degree: int) -> list[list[float]]:
         return [
-            [.5, .2, 1.] * degree,
-            [.5, .2, 1.] * degree,
-            [.5, .2, 1.] * degree,
+            [1.] * degree,
+            [1.] * degree,
+            [1.] * degree,
         ]
+
+    @staticmethod
+    def Exponential(t: float, *c: tuple[float]) -> float:
+        result = 0.0
+        for k in range(len(c)):
+            result +=  c[k] * exp(-k * t)
+        return result

@@ -299,11 +299,13 @@ class Controller:
     def _currentGradientChanged(self: Self, gradient: ColorGradient) -> None:
         self._gradientPropertyModel.loadGradient(gradient)
         self._gradientColorModel.loadGradient(gradient)
+        self._mainWindow._plot.loadGradient(gradient)
 
     def _gradientPropertyChanged(self: Self, topLeft: QModelIndex, bottomRight: QModelIndex, roles: list[Qt.ItemDataRole]):
         if Qt.ItemDataRole.EditRole in roles:
             self._gradientListModel.updateCurrentGradient()
             self._updateGradientPreview()
+            self._mainWindow._plot.loadGradient(self._gradientListModel._gradientList[self._gradientListModel._currentIndex])
 
     def _gradientListDataChanged(self: Self, topLeft: QModelIndex, bottomRight: QModelIndex, roles: list[Qt.ItemDataRole]):
         if Qt.ItemDataRole.EditRole in roles: 
