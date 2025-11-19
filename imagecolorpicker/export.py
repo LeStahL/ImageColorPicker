@@ -18,6 +18,7 @@ from construct import (
 from glm import ceil, sqrt
 from functools import reduce
 from PyQt6.QtGui import QColor
+from json import dumps
 
 
 class Export:
@@ -234,7 +235,101 @@ class Export:
                         )
                     ).build(cmaps)
                     return str(data)
-                
+        elif language == Language.CablesJSON:
+            if representation == Representation.ColorMap:
+                amounts = list(map(float, range(101)))
+                colorStops = list(map(
+                    lambda amount: selectedGradient.evaluateFit(float(amount) / 100.),
+                    amounts,
+                ))
+                return dumps({
+                    "ops": [
+                        {
+                            "id": "z7ve3f9nz",
+                            "objName": "Ops.Color.GradientColorArray",
+                            "opId": "4fe35363-bf00-40c4-bd15-eb2386fa24a0",
+                            "portsIn": [
+                                {
+                                    "name": "Gradient",
+                                    "value": dumps({
+                                        "keys": list(map(
+                                            lambda stopIndex: {
+                                                "pos": amounts[stopIndex] / 100.,
+                                                "r": colorStops[stopIndex].x,
+                                                "g": colorStops[stopIndex].y,
+                                                "b": colorStops[stopIndex].z,
+                                                "a": 1,
+                                            },
+                                            range(len(amounts)),
+                                        )),
+                                    }),
+                                },
+                                {
+                                    "name": "Direction index",
+                                    "value": 0
+                                },
+                                {
+                                    "name": "Direction",
+                                    "value": "X"
+                                },
+                                {
+                                    "name": "Smoothstep",
+                                    "value": 0
+                                },
+                                {
+                                    "name": "Step",
+                                    "value": 0
+                                },
+                                {
+                                    "name": "Flip",
+                                    "value": 0
+                                },
+                                {
+                                    "name": "sRGB",
+                                    "value": 0
+                                },
+                                {
+                                    "name": "Oklab",
+                                    "value": 0
+                                },
+                                {
+                                    "name": "Size",
+                                    "value": 1920
+                                },
+                                {
+                                    "name": "Dither",
+                                    "value": 0
+                                },
+                                {
+                                    "name": "Gradient Array",
+                                    "value": 0
+                                }
+                            ],
+                            "portsOut": [
+                                {
+                                    "name": "Width",
+                                    "value": 256
+                                },
+                                {
+                                    "name": "Height",
+                                    "value": 1
+                                }
+                            ],
+                            "uiAttribs": {
+                                "subPatch": 0,
+                                "translate": {
+                                    "x": -38.76760900814567,
+                                    "y": 28.13608049832294
+                                }
+                            }
+                        }
+                    ]
+                })
+                # colorSlide: str = '\n  '.join(map(
+                #     lambda stopIndex: f'<stop stop-color="{QColor.fromRgbF(*colorStops[stopIndex]).name()}" offset="{int(amounts[stopIndex])}%" />',
+                #     range(len(amounts)),
+                # ))
+                # return f'<linearGradient>\n{colorSlide}\n</linearGradient>'
         elif language == Language.NASM:
             pass
         elif language == Language.C:
