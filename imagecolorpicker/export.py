@@ -1,6 +1,6 @@
 from .representation import Representation
 from .language import Language
-from glm import vec3
+from glm import vec3, cos
 from .colorgradient import ColorGradient, DefaultGradient1, DefaultGradient2, FitModel
 from typing import (
     Callable,
@@ -19,6 +19,7 @@ from glm import ceil, sqrt
 from functools import reduce
 from PyQt6.QtGui import QColor
 from json import dumps
+from numpy import pi
 
 
 class Export:
@@ -58,11 +59,15 @@ class Export:
                     ))
                     closeStack: str = ')' * (len(cmap) - 1)
                     return f'vec3 cmap_{Export.MakeIdentifier(selectedGradient._name)}(float t) {{\n    return {openStack}\n    {closeStack};\n}}\n'
-                elif selectedGradient._model == FitModel.Trigonometric:
-                    return f'vec3 cmap_{Export.MakeIdentifier(selectedGradient._name)}(float t) {{\n    return vec3({cmap[0].x:.4f}, {cmap[0].y:.4f}, {cmap[0].z:.4f}) + vec3({cmap[1].x:.4f}, {cmap[1].y:.4f}, {cmap[1].z:.4f}) * cos(2. * pi * (vec3({cmap[2].x:.4f}, {cmap[2].y:.4f}, {cmap[2].z:.4f}) * t + vec3({cmap[3].x:.4f}, {cmap[3].y:.4f}, {cmap[3].z:.4f})));\n}}\n'
                 elif selectedGradient._model == FitModel.Fourier:
-                    slide = "\n      + ".join(map(lambda colorIndex: f"vec3({cmap[colorIndex].x:.2f}, {cmap[colorIndex].y:.2f}, {cmap[colorIndex].z:.2f}) * cos(pi * {colorIndex:.2f} * t)", range(len(cmap))))
-                    return f'vec3 cmap_{Export.MakeIdentifier(selectedGradient._name)}(float t) {{\n    return\n        {slide};\n}}'
+                    first = cmap[0] * cos(2. * pi * cmap[1])
+                    slide = "\n      + ".join(
+                        map(
+                            lambda colorIndex: f"vec3({cmap[2 * colorIndex].x:.2f}, {cmap[2 * colorIndex].y:.2f}, {cmap[2 * colorIndex].z:.2f}) * cos({pi * 2. * colorIndex:.2f} * t + vec3({pi * 2. * cmap[2 * colorIndex + 1].x:.2f}, {pi * 2. * cmap[2 * colorIndex + 1].y:.2f}, {pi * 2. * cmap[2 * colorIndex + 1].z:.2f}))",
+                            range(1, len(cmap) // 2),
+                        ),
+                    )
+                    return f'vec3 cmap_{Export.MakeIdentifier(selectedGradient._name)}(float t) {{\n    return vec3({first.x:.2f}, {first.y:.2f}, {first.z:.2f})\n      + {slide};\n}}'
                 elif selectedGradient._model == FitModel.Exponential:
                     slide = "\n      + ".join(map(lambda colorIndex: f"vec3({cmap[colorIndex].x:.2f}, {cmap[colorIndex].y:.2f}, {cmap[colorIndex].z:.2f}) * exp(-{colorIndex:.2f} * t)", range(len(cmap))))
                     return f'vec3 cmap_{Export.MakeIdentifier(selectedGradient._name)}(float t) {{\n    return\n        {slide};\n}}'
@@ -107,8 +112,6 @@ class Export:
                     result = f'const int gradient_count = {len(gradientList)};\nconst int single_gradient_size = {gradientList[0]._degree};\nconst vec3 all_cmap_coefficients[] = vec3[](\n    {coefficientSlide}\n);\n'
                     if selectedGradient._model == FitModel.HornerPolynomial:
                         return result + f'vec3 cmap(float t, int index) {{\n    vec3 a = all_cmap_coefficients[(index + 1) * single_gradient_size - 1];\n    for(int i = single_gradient_size - 2; i >= 0; --i)\n        a = all_cmap_coefficients[index * single_gradient_size + i] + t * a;\n    return a;\n}}\n'
-                    elif selectedGradient._model == FitModel.Trigonometric:
-                        return result + f'vec3 cmap(float t, int index) {{\n    return vec3({cmap[0].x:.4f}, {cmap[0].y:.4f}, {cmap[0].z:.4f}) + vec3({cmap[1].x:.4f}, {cmap[1].y:.4f}, {cmap[1].z:.4f}) * cos(2. * pi * (vec3({cmap[2].x:.4f}, {cmap[2].y:.4f}, {cmap[2].z:.4f}) * t + vec3({cmap[3].x:.4f}, {cmap[3].y:.4f}, {cmap[3].z:.4f})));\n}}\n'
                 else: 
                     cmap_offsets = []
                     offset = 0
@@ -131,8 +134,6 @@ class Export:
                     ))
                     closeStack: str = ')' * (len(cmap) - 1)
                     return f'float3 cmap_{Export.MakeIdentifier(selectedGradient._name)}(float t) {{\n    return {openStack}\n    {closeStack};\n}}\n'
-                elif selectedGradient._model == FitModel.Trigonometric:
-                    return f'float3 cmap_{Export.MakeIdentifier(selectedGradient._name)}(float t) {{\n    return float3({cmap[0].x:.4f}, {cmap[0].y:.4f}, {cmap[0].z:.4f}) + float3({cmap[1].x:.4f}, {cmap[1].y:.4f}, {cmap[1].z:.4f}) * cos(2. * pi * (float3({cmap[2].x:.4f}, {cmap[2].y:.4f}, {cmap[2].z:.4f}) * t + float3({cmap[3].x:.4f}, {cmap[3].y:.4f}, {cmap[3].z:.4f})));\n}}\n'
             elif representation == Representation.Color3:
                 return f'float3({selectedColor.x:.2f}, {selectedColor.y:.2f}, {selectedColor.z:.2f})'
             elif representation == Representation.Color4:
@@ -174,9 +175,7 @@ class Export:
                     result = f'const int gradient_count = {len(gradientList)};\nconst int single_gradient_size = {gradientList[0]._degree};\nconst float3 all_cmap_coefficients[] = {{\n    {coefficientSlide}\n}};\n'
                     if selectedGradient._model == FitModel.HornerPolynomial:
                         return result + f'float3 cmap(float t, int index) {{\n    float3 a = all_cmap_coefficients[(index + 1) * single_gradient_size - 1];\n    for(int i = single_gradient_size - 2; i >= 0; --i)\n        a = all_cmap_coefficients[index * single_gradient_size + i] + t * a;\n    return a;\n}}\n'
-                    elif selectedGradient._model == FitModel.Trigonometric:
-                        return result + f'float3 cmap(float t, int index) {{\n    return float3({cmap[0].x:.4f}, {cmap[0].y:.4f}, {cmap[0].z:.4f}) + float3({cmap[1].x:.4f}, {cmap[1].y:.4f}, {cmap[1].z:.4f}) * cos(2. * pi * (float3({cmap[2].x:.4f}, {cmap[2].y:.4f}, {cmap[2].z:.4f}) * t + float3({cmap[3].x:.4f}, {cmap[3].y:.4f}, {cmap[3].z:.4f})));\n}}\n'
-                else: 
+                else:
                     cmap_offsets = []
                     offset = 0
                     for gradient in gradientList:

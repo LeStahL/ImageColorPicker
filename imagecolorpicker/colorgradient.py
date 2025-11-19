@@ -54,7 +54,6 @@ class GradientMix(IntEnum):
 
 
 class FitModel(IntEnum):
-    Trigonometric = auto()
     HornerPolynomial = auto()
     Fourier = auto()
     Exponential = auto()
@@ -291,9 +290,6 @@ class ColorGradient:
         if self._model == FitModel.HornerPolynomial:
             model = OptimizationModel.Polynomial
             initialGuess = OptimizationModel.PolynomialInitialGuess(self._degree)
-        elif self._model == FitModel.Trigonometric:
-            model = OptimizationModel.Trigonometric
-            initialGuess = OptimizationModel.TrigonometricInitialGuess()
         elif self._model == FitModel.Fourier:
             model = OptimizationModel.Fourier
             initialGuess = OptimizationModel.FourierInitialGuess(self._degree)
@@ -413,8 +409,6 @@ class ColorGradient:
         model: Callable
         if self._model == FitModel.HornerPolynomial:
             model = OptimizationModel.Polynomial
-        elif self._model == FitModel.Trigonometric:
-            model = OptimizationModel.Trigonometric
         elif self._model == FitModel.Fourier:
             model = OptimizationModel.Fourier
         elif self._model == FitModel.Exponential:

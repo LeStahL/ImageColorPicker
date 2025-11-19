@@ -20,19 +20,6 @@ from lmfit.models import PolynomialModel
 
 class OptimizationModel:
     @staticmethod
-    def TrigonometricInitialGuess() -> list[list[float]]:
-        return [
-            [1.] * 4,
-            [1.] * 4,
-            [1.] * 4,
-        ]
-
-    @staticmethod
-    def Trigonometric(t: float, *p: tuple[float]) -> float:
-        a, b, c, d = p
-        return a + b * cos(2. * pi * (c * t + d))
-
-    @staticmethod
     def PolynomialInitialGuess(degree: int) -> list[list[float]]:
         return [
             [1.] * (degree - 2),
@@ -61,9 +48,9 @@ class OptimizationModel:
 
     @staticmethod
     def Fourier(t: float, *c: tuple[float]) -> float:
-        result = c[0]
-        for k in range(1, len(c)):
-            result += c[k] * cos(pi * k * t)
+        result = c[0] * cos(pi * 2 * c[1])
+        for k in range(1, len(c) // 2):
+            result += c[2 * k] * cos(pi * 2 * (k * t + c[2 * k + 1]))
         return result
 
     @staticmethod
