@@ -58,6 +58,7 @@ class FitModel(IntEnum):
     Fourier = auto()
     Exponential = auto()
     ChebyshevT = auto()
+    ChebyshevU = auto()
 
 
 class Wraparound(IntEnum):
@@ -300,6 +301,9 @@ class ColorGradient:
         elif self._model == FitModel.ChebyshevT:
             model = OptimizationModel.ChebyshevT
             initialGuess = OptimizationModel.ChebyshevTInitialGuess(self._degree)
+        elif self._model == FitModel.ChebyshevU:
+            model = OptimizationModel.ChebyshevU
+            initialGuess = OptimizationModel.ChebyshevUInitialGuess(self._degree)
 
         # Fit red
         r = array(list(map(
@@ -420,6 +424,8 @@ class ColorGradient:
             model = OptimizationModel.Exponential
         elif self._model == FitModel.ChebyshevT:
             model = OptimizationModel.ChebyshevT
+        elif self._model == FitModel.ChebyshevU:
+            model = OptimizationModel.ChebyshevU
         
         return vec3(
             model(t, *list(map(

@@ -87,3 +87,23 @@ class OptimizationModel:
             tnm1 = tn
             tn = tnp1
         return result
+
+    @staticmethod
+    def ChebyshevUInitialGuess(degree: int) -> list[list[float]]:
+        return [
+            [1.] * degree,
+            [1.] * degree,
+            [1.] * degree,
+        ]
+    
+    @staticmethod
+    def ChebyshevU(t: float, *c: tuple[float]) -> float:
+        result = 0.0
+        tnm1 = 1.0
+        tn = 2 * t
+        for k in range(len(c)):
+            result += c[k] * tnm1
+            tnp1 = 2 * t * tn - tnm1
+            tnm1 = tn
+            tn = tnp1
+        return result
