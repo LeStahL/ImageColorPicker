@@ -67,3 +67,23 @@ class OptimizationModel:
         for k in range(len(c)):
             result +=  c[k] * exp(-k * t)
         return result
+
+    @staticmethod
+    def ChebyshevTInitialGuess(degree: int) -> list[list[float]]:
+        return [
+            [1.] * degree,
+            [1.] * degree,
+            [1.] * degree,
+        ]
+    
+    @staticmethod
+    def ChebyshevT(t: float, *c: tuple[float]) -> float:
+        result = 0.0
+        tnm1 = 1.0
+        tn = t
+        for k in range(len(c)):
+            result += c[k] * tnm1
+            tnp1 = 2 * t * tn - tnm1
+            tnm1 = tn
+            tn = tnp1
+        return result

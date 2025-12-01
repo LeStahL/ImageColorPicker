@@ -57,6 +57,7 @@ class FitModel(IntEnum):
     HornerPolynomial = auto()
     Fourier = auto()
     Exponential = auto()
+    ChebyshevT = auto()
 
 
 class Wraparound(IntEnum):
@@ -296,6 +297,10 @@ class ColorGradient:
         elif self._model == FitModel.Exponential:
             model = OptimizationModel.Exponential
             initialGuess = OptimizationModel.ExponentialInitialGuess(self._degree)
+        elif self._model == FitModel.ChebyshevT:
+            model = OptimizationModel.ChebyshevT
+            initialGuess = OptimizationModel.ChebyshevTInitialGuess(self._degree)
+
         # Fit red
         r = array(list(map(
             lambda color: color.x,
@@ -413,6 +418,8 @@ class ColorGradient:
             model = OptimizationModel.Fourier
         elif self._model == FitModel.Exponential:
             model = OptimizationModel.Exponential
+        elif self._model == FitModel.ChebyshevT:
+            model = OptimizationModel.ChebyshevT
         
         return vec3(
             model(t, *list(map(

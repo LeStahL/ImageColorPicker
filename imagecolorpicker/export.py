@@ -71,6 +71,9 @@ class Export:
                 elif selectedGradient._model == FitModel.Exponential:
                     slide = "\n      + ".join(map(lambda colorIndex: f"vec3({cmap[colorIndex].x:.2f}, {cmap[colorIndex].y:.2f}, {cmap[colorIndex].z:.2f}) * exp(-{colorIndex:.2f} * t)", range(len(cmap))))
                     return f'vec3 cmap_{Export.MakeIdentifier(selectedGradient._name)}(float t) {{\n    return\n        {slide};\n}}'
+                elif selectedGradient._model == FitModel.ChebyshevT:
+                    slide = ', '.join(map(lambda colorIndex: f"vec3({cmap[colorIndex].x:.2f}, {cmap[colorIndex].y:.2f}, {cmap[colorIndex].z:.2f})", range(len(cmap))))
+                    return f'vec3 cmap_{Export.MakeIdentifier(selectedGradient._name)}(float t) {{\n    vec3 result = vec3(0);\n    float tnm1 = 1., tn = t;\n    for(int k=0; k<{len(cmap)}; ++k) {{\n        result += vec3[]({slide})[k] * tnm1;\n        float tnp1 = 2. * t * tn - tnm1;\n        tnm1 = tn;\n        tn = tnp1;\n    }}\n    return result;\n}}\n'
             elif representation == Representation.Color3:
                 return f'vec3({selectedColor.x:.2f}, {selectedColor.y:.2f}, {selectedColor.z:.2f})'
             elif representation == Representation.Color4:
