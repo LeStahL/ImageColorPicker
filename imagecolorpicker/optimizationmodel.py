@@ -16,6 +16,8 @@ from numpy import (
     log,
 )
 from lmfit.models import PolynomialModel
+from math import comb
+from numpy import where
 
 
 class OptimizationModel:
@@ -106,4 +108,88 @@ class OptimizationModel:
             tnp1 = 2 * t * tn - tnm1
             tnm1 = tn
             tn = tnp1
+        return result
+
+    @staticmethod
+    def GaussianInitialGuess(degree: int) -> list[list[float]]:
+        result = []
+        for _ in range(3):
+            coeffs = []
+            for k in range(degree // 3):
+                coeffs.extend([
+                    1.0,
+                    (k + 0.5) / degree,
+                    0.25,
+                ])
+            result.append(coeffs)
+        return result
+
+    @staticmethod
+    def Gaussian(t: float, *c: tuple[float]) -> float:
+        result = 0.0
+        for k in range(len(c) // 3):
+            amplitude = c[3 * k]
+            center = c[3 * k + 1]
+            sigma = abs(c[3 * k + 2]) + 1e-6
+            x = (t - center) / sigma
+            result += amplitude * exp(-x * x)
+        return result
+
+    @staticmethod
+    def BernsteinInitialGuess(degree: int) -> list[list[float]]:
+        return [
+            [1.] * degree,
+            [1.] * degree,
+            [1.] * degree,
+        ]
+
+
+    @staticmethod
+    def Bernstein(t: float, *c: tuple[float]) -> float:
+        n = len(c) - 1
+        result = 0.0
+        for i in range(len(c)):
+            result += (
+                c[i]
+                * comb(n, i)
+                * t**i
+                * (1.0 - t)**(n - i)
+            )
+        return result
+
+    @staticmethod
+    def HaarInitialGuess(degree: int) -> list[list[float]]:
+        return [
+            [1.] * degree,
+            [1.] * degree,
+            [1.] * degree,
+        ]
+    
+    @staticmethod
+    def HaarBasis(t: float, level: int, shift: int):
+        scale = 1 << level
+        x = t * scale - shift
+        return where(
+            (x >= 0.0) & (x < 1.0),
+            where(
+                x < 0.5,
+                1.0,
+                -1.0,
+            ),
+            0.0,
+        )
+
+    @staticmethod
+    def Haar(t: float, *c: tuple[float]) -> float:
+        result = c[0]
+        index = 1
+        level = 0
+        while index < len(c):
+            count = 1 << level
+            for shift in range(count):
+                if index >= len(c):
+                    break
+                result += c[index] * OptimizationModel.HaarBasis(t, level, shift)
+                index += 1
+            level += 1
         return result

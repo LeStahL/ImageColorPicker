@@ -38,7 +38,17 @@ from .colorspace import (
     Illuminant,
 )
 from .optimizationmodel import OptimizationModel
-
+from .basis import (
+    project,
+    fourierBasis,
+    bernsteinBasis,
+    chebyshevUBasis,
+    chebyshevTBasis,
+    gaussianBasis,
+    rickerBasis,
+    bSplineBasis,
+    monomialBasis,
+)
 
 class GradientWeight(IntEnum):
     Oklab = 0x2
@@ -54,11 +64,15 @@ class GradientMix(IntEnum):
 
 
 class FitModel(IntEnum):
-    HornerPolynomial = auto()
+    Monomial = auto()
     Fourier = auto()
-    Exponential = auto()
+    # Exponential = auto()
     ChebyshevT = auto()
     ChebyshevU = auto()
+    Gaussian = auto()
+    Bernstein = auto()
+    Ricker = auto()
+    BSpline = auto()
 
 
 class Wraparound(IntEnum):
@@ -83,7 +97,7 @@ class ColorGradient:
         colors: list[vec3],
         observer: Observer = Observer.TwoDegreesCIE1931,
         illuminant: Illuminant = Illuminant.D65,
-        model: FitModel = FitModel.HornerPolynomial,
+        model: FitModel = FitModel.Fourier,
         wraparound: Wraparound = Wraparound.Wrap,
         fitAlgorithm: FitAlgorithm = FitAlgorithm.LM,
         maxFitIterationCount: int = 5000,
@@ -276,6 +290,18 @@ class ColorGradient:
             ColorGradient.polynomial(t, *green),
             ColorGradient.polynomial(t, *blue),
         ) - c0)
+    
+    def basis(self: Self) -> Callable:
+        return {
+            FitModel.Fourier: fourierBasis,
+            FitModel.Bernstein: bernsteinBasis,
+            FitModel.ChebyshevT: chebyshevTBasis,
+            FitModel.ChebyshevU: chebyshevUBasis,
+            FitModel.Gaussian: gaussianBasis,
+            FitModel.Ricker: rickerBasis,
+            FitModel.BSpline: bSplineBasis,
+            FitModel.Monomial: monomialBasis,
+        }[self._model]
 
     def fit(
         self: Self,
@@ -286,64 +312,19 @@ class ColorGradient:
             lambda _amount: self.evaluate(_amount),
             t,
         ))
-
-        initialGuess: list[list[float]]
-        model: Callable
-        if self._model == FitModel.HornerPolynomial:
-            model = OptimizationModel.Polynomial
-            initialGuess = OptimizationModel.PolynomialInitialGuess(self._degree)
-        elif self._model == FitModel.Fourier:
-            model = OptimizationModel.Fourier
-            initialGuess = OptimizationModel.FourierInitialGuess(self._degree)
-        elif self._model == FitModel.Exponential:
-            model = OptimizationModel.Exponential
-            initialGuess = OptimizationModel.ExponentialInitialGuess(self._degree)
-        elif self._model == FitModel.ChebyshevT:
-            model = OptimizationModel.ChebyshevT
-            initialGuess = OptimizationModel.ChebyshevTInitialGuess(self._degree)
-        elif self._model == FitModel.ChebyshevU:
-            model = OptimizationModel.ChebyshevU
-            initialGuess = OptimizationModel.ChebyshevUInitialGuess(self._degree)
-
-        # Fit red
-        r = array(list(map(
-            lambda color: color.x,
-            sampledColors,
-        )))
-        rp, _ = curve_fit(model, t, r, initialGuess[0], method='trf', loss='arctan', maxfev=5000)
-
-        # Fit green
-        g = array(list(map(
-            lambda color: color.y,
-            sampledColors,
-        )))
-        gp, _ = curve_fit(model, t, g, initialGuess[1], method='trf', loss='arctan', maxfev=5000)
-
-        # Fit red
-        b = array(list(map(
-            lambda color: color.z,
-            sampledColors,
-        )))
-        bp, _ = curve_fit(model, t, b, initialGuess[2], method='trf', loss='arctan', maxfev=5000)
-
+        r = array([c.x for c in sampledColors])
+        g = array([c.y for c in sampledColors])
+        b = array([c.z for c in sampledColors])
+        basis: Callable = self.basis()
+        rp = project(r, t, self._degree, basis)
+        gp = project(g, t, self._degree, basis)
+        bp = project(b, t, self._degree, basis)
         result: List[vec3] = []
         for parameterIndex in range(len(bp)):
             result.append(vec3(
                 rp[parameterIndex],
                 gp[parameterIndex],
                 bp[parameterIndex],
-            ))
-        if self._model == FitModel.HornerPolynomial:
-            o = len(bp) + 1
-            result.append(vec3(
-                1. / (o - 2) * (rp[o - 2] - sum(map(lambda i: i * rp[i] - rp[i - 1], range(2, o - 1)))),
-                1. / (o - 2) * (gp[o - 2] - sum(map(lambda i: i * gp[i] - gp[i - 1], range(2, o - 1)))),
-                1. / (o - 2) * (bp[o - 2] - sum(map(lambda i: i * bp[i] - bp[i - 1], range(2, o - 1)))),
-            ))
-            result.append(vec3(
-                (1 - o) / (o - 2) * (rp[o - 2] - sum(map(lambda i: i * rp[i] - rp[i - 1], range(2, o - 1)))) - sum(map(lambda i: i * rp[i], range(2, o - 1))),
-                (1 - o) / (o - 2) * (gp[o - 2] - sum(map(lambda i: i * gp[i] - gp[i - 1], range(2, o - 1)))) - sum(map(lambda i: i * gp[i], range(2, o - 1))),
-                (1 - o) / (o - 2) * (bp[o - 2] - sum(map(lambda i: i * bp[i] - bp[i - 1], range(2, o - 1)))) - sum(map(lambda i: i * bp[i], range(2, o - 1))),
             ))
         print(result)
         return result
@@ -414,33 +395,17 @@ class ColorGradient:
             range(len(result)),
         ))) + ","
 
-    def evaluateFit(self: Self, t: float) -> vec3:
-        model: Callable
-        if self._model == FitModel.HornerPolynomial:
-            model = OptimizationModel.Polynomial
-        elif self._model == FitModel.Fourier:
-            model = OptimizationModel.Fourier
-        elif self._model == FitModel.Exponential:
-            model = OptimizationModel.Exponential
-        elif self._model == FitModel.ChebyshevT:
-            model = OptimizationModel.ChebyshevT
-        elif self._model == FitModel.ChebyshevU:
-            model = OptimizationModel.ChebyshevU
-        
-        return vec3(
-            model(t, *list(map(
-                lambda fitelement: fitelement.x,
-                self._coefficients,
-            ))),
-            model(t, *list(map(
-                lambda fitelement: fitelement.y,
-                self._coefficients,
-            ))),
-            model(t, *list(map(
-                lambda fitelement: fitelement.z,
-                self._coefficients,
-            ))),
-        )
+    def evaluateFit(self, t: float) -> vec3:
+        r = 0.0
+        g = 0.0
+        b = 0.0
+        basis: Callable = self.basis()
+        for i, coeff in enumerate(self._coefficients):
+            phi = basis(i, t, self._degree)
+            r += coeff.x * phi
+            g += coeff.y * phi
+            b += coeff.z * phi
+        return vec3(r, g, b)
 
     def buildCSSGradient(
         self: Self,

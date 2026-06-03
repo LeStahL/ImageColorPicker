@@ -20,6 +20,12 @@ from functools import reduce
 from PyQt6.QtGui import QColor
 from json import dumps
 from numpy import pi
+from .basis import (
+    fourierGLSL,
+    bernsteinGLSL,
+    chebyshevTGLSL,
+    monomialGLSL,
+)
 
 
 class Export:
@@ -54,31 +60,37 @@ class Export:
                 cmap: list[vec3] = selectedGradient.coefficients
                 stopSlide = ', '.join(map(lambda color: QColor.fromRgbF(color.x, color.y, color.z).name(), selectedGradient._colors))
                 metadataComment = f"/*\n     * Created with ImageColorPicker (https://github.com/LeStahL/ImageColorPicker).\n     * Model: {selectedGradient._model.name}\n     * Weight color space: {selectedGradient._weightColorSpace.name}\n     * Mix color space: {selectedGradient._mixColorSpace.name}\n     * Color stops: {stopSlide}\n     */"
-                if selectedGradient._model == FitModel.HornerPolynomial:
-                    openStack: str = '\n        +t*('.join(map(
-                        lambda color: f'vec3({color.x:.2f}, {color.y:.2f}, {color.z:.2f})',
-                        cmap,
-                    ))
-                    closeStack: str = ')' * (len(cmap) - 1)
-                    return f'vec3 cmap_{Export.MakeIdentifier(selectedGradient._name)}(float t) {{\n    {metadataComment}\n    return {openStack}\n    {closeStack};\n}}\n'
-                elif selectedGradient._model == FitModel.Fourier:
-                    first = cmap[0] * cos(2. * pi * cmap[1])
-                    slide = "\n      + ".join(
-                        map(
-                            lambda colorIndex: f"vec3({cmap[2 * colorIndex].x:.2f}, {cmap[2 * colorIndex].y:.2f}, {cmap[2 * colorIndex].z:.2f}) * cos({pi * 2. * colorIndex:.2f} * t + vec3({pi * 2. * cmap[2 * colorIndex + 1].x:.2f}, {pi * 2. * cmap[2 * colorIndex + 1].y:.2f}, {pi * 2. * cmap[2 * colorIndex + 1].z:.2f}))",
-                            range(1, len(cmap) // 2),
-                        ),
-                    )
-                    return f'vec3 cmap_{Export.MakeIdentifier(selectedGradient._name)}(float t) {{\n    {metadataComment}\n    return vec3({first.x:.2f}, {first.y:.2f}, {first.z:.2f})\n      + {slide};\n}}'
-                elif selectedGradient._model == FitModel.Exponential:
-                    slide = "\n      + ".join(map(lambda colorIndex: f"vec3({cmap[colorIndex].x:.2f}, {cmap[colorIndex].y:.2f}, {cmap[colorIndex].z:.2f}) * exp(-{colorIndex:.2f} * t)", range(len(cmap))))
-                    return f'vec3 cmap_{Export.MakeIdentifier(selectedGradient._name)}(float t) {{\n    {metadataComment}\n    return\n        {slide};\n}}'
+                # if selectedGradient._model == FitModel.HornerPolynomial:
+                    # openStack: str = '\n        +t*('.join(map(
+                    #     lambda color: f'vec3({color.x:.2f}, {color.y:.2f}, {color.z:.2f})',
+                    #     cmap,
+                    # ))
+                    # closeStack: str = ')' * (len(cmap) - 1)
+                    # return f'vec3 cmap_{Export.MakeIdentifier(selectedGradient._name)}(float t) {{\n    {metadataComment}\n    return {openStack}\n    {closeStack};\n}}\n'
+                glsl = ""
+                if selectedGradient._model == FitModel.Fourier:
+                    glsl = fourierGLSL(cmap)
+                elif selectedGradient._model == FitModel.Bernstein:
+                    glsl = bernsteinGLSL(cmap)
                 elif selectedGradient._model == FitModel.ChebyshevT:
-                    slide = ', '.join(map(lambda colorIndex: f"vec3({cmap[colorIndex].x:.2f}, {cmap[colorIndex].y:.2f}, {cmap[colorIndex].z:.2f})", range(len(cmap))))
-                    return f'vec3 cmap_{Export.MakeIdentifier(selectedGradient._name)}(float t) {{\n    {metadataComment}\n    vec3 result = vec3(0);\n    float tnm1 = 1., tn = t;\n    for(int k=0; k<{len(cmap)}; ++k) {{\n        result += vec3[]({slide})[k] * tnm1;\n        float tnp1 = 2. * t * tn - tnm1;\n        tnm1 = tn;\n        tn = tnp1;\n    }}\n    return result;\n}}\n'
-                elif selectedGradient._model == FitModel.ChebyshevU:
-                    slide = ', '.join(map(lambda colorIndex: f"vec3({cmap[colorIndex].x:.2f}, {cmap[colorIndex].y:.2f}, {cmap[colorIndex].z:.2f})", range(len(cmap))))
-                    return f'vec3 cmap_{Export.MakeIdentifier(selectedGradient._name)}(float t) {{\n    {metadataComment}\n    vec3 result = vec3(0);\n    float tnm1 = 1., tn = 2. * t;\n    for(int k=0; k<{len(cmap)}; ++k) {{\n        result += vec3[]({slide})[k] * tnm1;\n        float tnp1 = 2. * t * tn - tnm1;\n        tnm1 = tn;\n        tn = tnp1;\n    }}\n    return result;\n}}\n'
+                    glsl = chebyshevTGLSL(cmap)
+                elif selectedGradient._model == FitModel.Monomial:
+                    glsl = monomialGLSL(cmap)
+                return f"""
+vec3 cmap_{Export.MakeIdentifier(selectedGradient._name)}(float t) {{
+    {metadataComment}
+    {glsl}
+}}
+"""
+                # elif selectedGradient._model == FitModel.Exponential:
+                    # slide = "\n      + ".join(map(lambda colorIndex: f"vec3({cmap[colorIndex].x:.2f}, {cmap[colorIndex].y:.2f}, {cmap[colorIndex].z:.2f}) * exp(-{colorIndex:.2f} * t)", range(len(cmap))))
+                    # return f'vec3 cmap_{Export.MakeIdentifier(selectedGradient._name)}(float t) {{\n    {metadataComment}\n    return\n        {slide};\n}}'
+                # elif selectedGradient._model == FitModel.ChebyshevT:
+                #     slide = ', '.join(map(lambda colorIndex: f"vec3({cmap[colorIndex].x:.2f}, {cmap[colorIndex].y:.2f}, {cmap[colorIndex].z:.2f})", range(len(cmap))))
+                #     return f'vec3 cmap_{Export.MakeIdentifier(selectedGradient._name)}(float t) {{\n    {metadataComment}\n    vec3 result = vec3(0);\n    float tnm1 = 1., tn = t;\n    for(int k=0; k<{len(cmap)}; ++k) {{\n        result += vec3[]({slide})[k] * tnm1;\n        float tnp1 = 2. * t * tn - tnm1;\n        tnm1 = tn;\n        tn = tnp1;\n    }}\n    return result;\n}}\n'
+                # elif selectedGradient._model == FitModel.ChebyshevU:
+                #     slide = ', '.join(map(lambda colorIndex: f"vec3({cmap[colorIndex].x:.2f}, {cmap[colorIndex].y:.2f}, {cmap[colorIndex].z:.2f})", range(len(cmap))))
+                #     return f'vec3 cmap_{Export.MakeIdentifier(selectedGradient._name)}(float t) {{\n    {metadataComment}\n    vec3 result = vec3(0);\n    float tnm1 = 1., tn = 2. * t;\n    for(int k=0; k<{len(cmap)}; ++k) {{\n        result += vec3[]({slide})[k] * tnm1;\n        float tnp1 = 2. * t * tn - tnm1;\n        tnm1 = tn;\n        tn = tnp1;\n    }}\n    return result;\n}}\n'
             elif representation == Representation.Color3:
                 return f'vec3({selectedColor.x:.2f}, {selectedColor.y:.2f}, {selectedColor.z:.2f})'
             elif representation == Representation.Color4:
