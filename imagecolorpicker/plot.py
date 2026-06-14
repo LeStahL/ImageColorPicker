@@ -2,9 +2,12 @@ from PyQt6.QtWidgets import (
     QApplication,
     QWidget,
     QVBoxLayout,
+    QSizePolicy,
 )
+from PyQt6.QtCore import QSize
 from imagecolorpicker.colorgradient import ColorGradient
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
+from matplotlib.figure import Figure
 from typing import (
     Self,
 )
@@ -21,19 +24,28 @@ from sys import argv
 
 
 class Plot(QWidget):
-    def __init__(
-        self: Self,
-    ) -> None:
+    def __init__(self) -> None:
         super().__init__()
-        self._fig, (self._ax_data, self._ax_res) = matplotlib.pyplot.subplots(
-            2, 1, sharex=True,
+
+        self._fig = Figure()
+        self._ax_data, self._ax_res = self._fig.subplots(
+            2, 1,
+            sharex=True,
             gridspec_kw={"height_ratios": [3, 1]},
-            figsize=(8, 6)
         )
+
         self.canvas = FigureCanvasQTAgg(self._fig)
+        self.canvas.setSizePolicy(
+            QSizePolicy.Policy.Expanding,
+            QSizePolicy.Policy.Expanding,
+        )
+        self.canvas.setMinimumSize(0, 0)
+        self.canvas.sizeHint = lambda: QSize(100,100)
+
         layout = QVBoxLayout(self)
         layout.addWidget(self.canvas)
-        self._t = linspace(0., 1., 250)
+
+        self._t = linspace(0.0, 1.0, 250)
 
     def loadGradient(
         self: Self,
