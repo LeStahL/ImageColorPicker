@@ -2,7 +2,7 @@
 from os.path import abspath, join
 from zipfile import ZipFile
 from platform import system
-from imagecolorpicker.version import Version
+from version import Version
 from pathlib import Path
 
 moduleName = 'imagecolorpicker'
