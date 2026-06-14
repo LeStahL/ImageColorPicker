@@ -40,7 +40,11 @@ jobs:
         run: pip install poetry
       - name: Install dependencies
         run: poetry install --no-interaction
-      - name: Build binary
+      - name: Build binary (Linux)
+        if: runner.os == 'Linux'
+        run: QT_QPA_PLATFORM=offscreen poetry run pyinstaller pyinstaller.spec
+      - name: Build binary (Windows)
+        if: runner.os == 'Windows'
         run: poetry run pyinstaller pyinstaller.spec
       - name: Determine version
         id: version
