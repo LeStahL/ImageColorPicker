@@ -50,7 +50,7 @@ exe = EXE(
     a.zipfiles,
     a.datas,
     [],
-    name='{}-{}'.format(moduleName, version.describe()),
+    name=moduleName,
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
@@ -67,7 +67,7 @@ exe = EXE(
 )
 
 exeFileName = '{}{}'.format(moduleName, '.exe' if system() == 'Windows' else '')
-zipFileName = '{}-{}.zip'.format(moduleName, 'windows' if system() == 'Windows' else 'linux')
+zipFileName = '{}-{}.zip'.format(moduleName, 'windows' if system() == 'Windows' else 'Linux')
 
 zipfile = ZipFile(distPath / zipFileName, mode='w')
 zipfile.write(distPath / exeFileName, arcname=exeFileName)
