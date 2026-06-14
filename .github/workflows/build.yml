@@ -2,13 +2,13 @@ name: build-binary
 on:
   push:
     branches:
-      - main
+      - master
       - dev
     tags:
       - "*"
   pull_request:
     branches:
-      - main
+      - master
       - dev
 permissions:
   contents: write
