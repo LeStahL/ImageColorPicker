@@ -2,7 +2,7 @@
 from os.path import abspath, join
 from zipfile import ZipFile
 from platform import system
-from imagecolorpicker.version import Version
+from version import Version
 from pathlib import Path
 
 moduleName = 'imagecolorpicker'
@@ -50,7 +50,7 @@ exe = EXE(
     a.zipfiles,
     a.datas,
     [],
-    name='{}-{}'.format(moduleName, version.describe()),
+    name=moduleName,
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
@@ -66,8 +66,8 @@ exe = EXE(
     icon=join(sourcePath, 'team210.ico'),
 )
 
-exeFileName = '{}-{}{}'.format(moduleName, version.describe(), '.exe' if system() == 'Windows' else '')
-zipFileName = '{}-{}-{}.zip'.format(moduleName, version.describe(), 'windows' if system() == 'Windows' else 'linux')
+exeFileName = '{}{}'.format(moduleName, '.exe' if system() == 'Windows' else '')
+zipFileName = '{}-{}.zip'.format(moduleName, 'windows' if system() == 'Windows' else 'Linux')
 
 zipfile = ZipFile(distPath / zipFileName, mode='w')
 zipfile.write(distPath / exeFileName, arcname=exeFileName)

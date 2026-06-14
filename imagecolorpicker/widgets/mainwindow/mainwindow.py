@@ -79,7 +79,11 @@ class MainWindow(QMainWindow):
         self._ui.actionForce_16_9_View.triggered.connect(self._force16_9View)
 
         self._ui.actionAbout_Qt.triggered.connect(self.aboutQt)
-
+        self.resizeDocks(
+            [self._ui.dockWidget_2],
+            [230],
+            Qt.Orientation.Horizontal,
+        )
 
     def _updateCoordinateType(self: Self, coordinateType: CoordinateType) -> None:
         self._coordinateType = coordinateType

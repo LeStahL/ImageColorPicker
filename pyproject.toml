@@ -5,6 +5,10 @@ description = "Image color picker tool by Team210"
 authors = ["Alexander Kraus <nr4@z10.info>"]
 license = "GPLv3"
 readme = "README.md"
+packages = [
+    {include = "imagecolorpicker"},
+    {include = "version"},
+]
 
 [tool.poetry.dependencies]
 python = ">=3.11,<3.13"
