@@ -66,8 +66,8 @@ exe = EXE(
     icon=join(sourcePath, 'team210.ico'),
 )
 
-exeFileName = '{}-{}{}'.format(moduleName, version.describe(), '.exe' if system() == 'Windows' else '')
-zipFileName = '{}-{}-{}.zip'.format(moduleName, version.describe(), 'windows' if system() == 'Windows' else 'linux')
+exeFileName = '{}{}'.format(moduleName, '.exe' if system() == 'Windows' else '')
+zipFileName = '{}-{}.zip'.format(moduleName, 'windows' if system() == 'Windows' else 'linux')
 
 zipfile = ZipFile(distPath / zipFileName, mode='w')
 zipfile.write(distPath / exeFileName, arcname=exeFileName)
