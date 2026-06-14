@@ -1,0 +1,79 @@
+name: build-binary
+on:
+  push:
+    branches:
+      - main
+      - dev
+    tags:
+      - "*"
+  pull_request:
+    branches:
+      - main
+      - dev
+permissions:
+  contents: write
+jobs:
+  build:
+    runs-on: ${{ matrix.config.os }}
+    strategy:
+      matrix:
+        config:
+          - os: ubuntu-latest
+            artifact_os: linux
+          - os: windows-latest
+            artifact_os: windows
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+      - name: Install Python 3.12
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - name: Install poetry
+        run: pip install poetry
+      - name: Install dependencies
+        run: poetry install --no-interaction --no-root
+      - name: Build binary
+        run: poetry run pyinstaller pyinstaller.spec
+      - name: Determine version
+        id: version
+        shell: bash
+        run: |
+          if [[ "${GITHUB_REF}" == refs/tags/* ]]; then
+            VERSION="${GITHUB_REF_NAME}"
+          else
+            VERSION="${GITHUB_SHA::7}"
+          fi
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+      - name: Package artifact (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          mv dist/imagecolorpicker-Linux.zip "imagecolorpicker-${{ steps.version.outputs.version }}-${{ matrix.config.artifact_os }}.zip"
+      - name: Package artifact (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          Move-Item "dist\imagecolorpicker-Windows.zip" "imagecolorpicker-${{ steps.version.outputs.version }}-${{ matrix.config.artifact_os }}.zip"
+      - name: Upload artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: imagecolorpicker-${{ steps.version.outputs.version }}-${{ matrix.config.artifact_os }}
+          path: imagecolorpicker-${{ steps.version.outputs.version }}-${{ matrix.config.artifact_os }}.zip
+  release:
+    if: startsWith(github.ref, 'refs/tags/')
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download artifacts
+        uses: actions/download-artifact@v8
+        with:
+          path: artifacts
+          merge-multiple: true
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v3
+        with:
+          tag_name: ${{ github.ref_name }}
+          generate_release_notes: true
+          files: artifacts/*.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
