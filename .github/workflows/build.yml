@@ -28,7 +28,8 @@ jobs:
           sudo apt-get install -y \
             libegl1 \
             libgl1 \
-            libxkbcommon-x11-0
+            libxkbcommon-x11-0 \
+            libxcb-cursor0
       - name: Checkout repository
         uses: actions/checkout@v6
       - name: Install Python 3.12
