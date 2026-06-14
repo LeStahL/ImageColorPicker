@@ -23,6 +23,12 @@ jobs:
           - os: windows-latest
             artifact_os: windows
     steps:
+      - if: runner.os == 'Linux'
+        run: |
+        sudo apt-get install -y \
+          libegl1 \
+          libgl1 \
+          libxkbcommon-x11-0
       - name: Checkout repository
         uses: actions/checkout@v6
       - name: Install Python 3.12
